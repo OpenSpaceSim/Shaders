@@ -26,6 +26,7 @@ struct vertex
 GLuint vertexCount;
 vertex* vertices;
 vertex* normals;
+vertex* colors;
 Shader* shader;
 GLuint vertexArrays[2];
 GLuint vertexBuffers[2];
@@ -41,10 +42,24 @@ inline void checkError()
     GLenum err = glGetError();
     if(err != GL_NO_ERROR)
     {
-    	cout << gluErrorString(err) << endl;
+    	cout << gluErrorString(err);
+    	if(err == GL_INVALID_ENUM)
+    	{ 
+    		cout <<" (GL_INVALID_ENUM)" << endl;
+    		return;
+	}
+    	if(err == GL_INVALID_VALUE)
+    	{
+    		cout << " (GL_INVALID_VALUE)"<<endl;
+    		return;
+	}
+	if(err == GL_INVALID_OPERATION)
+	{
+		cout << " (GL_INVALID_OPERATION)"<<endl;
+		return;
+	}
+	cout << " (" << err << ")" << endl;
     }
-    
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 }
 
 void loadModel()
@@ -208,18 +223,21 @@ int main(int argc, char *argv[])
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
     cout << "GLUT version " << glutGet(GLUT_VERSION) << endl;
-    //glutInitContextFlags (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-    glutInitContextVersion(3, 2);
-    glutInitContextFlags(GLUT_CORE_PROFILE);
     
+    glutInitContextVersion(3, 2);
+    //glutInitContextFlags (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    checkError();
+    glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
+    checkError();
     glutInitWindowPosition(10,10);
+    checkError();
     glutInitWindowSize(640,480);
+    checkError();
     
     glutCreateWindow("Open Space Sim");
     
-    int glVersion[2] = {0, 0};
-    glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
-    glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
+    checkError();
+    cout << "GLUT setup complete\n";
     
     glewExperimental=GL_TRUE;
 	GLenum err=glewInit();
@@ -229,39 +247,83 @@ int main(int argc, char *argv[])
 		cout<<"glewInit failed, aborting."<<endl;
 		exit(1);
 	}
+	
+	checkError();
+    cout << "GLEW setup complete\n";
     
     cout<<"OpenGL version = "<<glGetString(GL_VERSION)<<endl;
+    
+    int glVersion[2] = {0, 0};
+    glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
+    glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     std::cout << "Using OpenGL: " << glVersion[0] << "." << glVersion[1] << std::endl;
 
-    
+    checkError();
 
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
     glutIdleFunc(idle);
+    
+    checkError();
+    cout << "Setup GLUT callbacks" << endl;
 
     glClearColor(0,0,0,0);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    checkError();
+    cout << "GL setup complete" << endl;
 
     loadModel();
     
     normals = new vertex[vertexCount];
     calculateModelNormals(normals,4);
     
-    cout << glGenVertexArrays << endl;
-    
+    colors = new vertex[vertexCount];
+    for(int i=0;i<vertexCount;i++)
+    {
+    	switch(i%3)
+    	{
+    		case 0:
+    			colors[i].x = 1.0f;
+    			colors[i].y = 0.0f;
+    			colors[i].z = 0.0f;
+    			break;
+		case 1:
+    			colors[i].x = 0.0f;
+    			colors[i].y = 1.0f;
+    			colors[i].z = 0.0f;
+    			break;
+		case 2:
+    			colors[i].x = 0.0f;
+    			colors[i].y = 0.0f;
+    			colors[i].z = 1.0f;
+    			break;
+	}
+    }
+    checkError();
     glGenVertexArrays(1, vertexArrays);
+    checkError();
     glBindVertexArray(vertexArrays[0]);
+    checkError();
     glGenBuffers(2, vertexBuffers);
+    checkError();
     glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[0]);
     glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[1]);
+    checkError();
+    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), colors, GL_STATIC_DRAW);
+    checkError();
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    checkError();
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+    
+    checkError();
     
     shader = new Shader("shader.vert","shader.frag");
 
