@@ -14,7 +14,7 @@ out vec4 pass_LightPos;
 
 void main(void)
 {
-    gl_Position = (viewMatrix*vec4(in_Position[1],in_Position[2],-in_Position[0], 1.0)/scalar)+vec4(0.0,-0.4,1.0,1.0);
+    gl_Position = (viewMatrix*modelMatrix*vec4(in_Position[1],in_Position[2],-in_Position[0], 1.0)/scalar)+vec4(0.0,-0.4,1.0,1.0);
      pass_Color = in_Color;
      pass_Normal = (viewMatrix*modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
      pass_LightPos = (viewMatrix*lightPosition)-gl_Position;

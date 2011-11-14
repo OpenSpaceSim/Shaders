@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     colors = new vertex[vertexCount];
     for(int i=0;i<vertexCount;i++)
     {
-    	switch(i%3)
+    	switch(i%1)
     	{
     		case 0:
     			colors[i].x = 1.0f;
