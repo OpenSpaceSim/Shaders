@@ -151,10 +151,10 @@ void calculateModelNormals(vertex* normals, GLint polygonSize)
 GLfloat viewMatrix[16];
 
 //lighting and material information
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 0.8f, 0.9f, 1.0f, 1.0f };
+const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.3f, 1.0f };
+const GLfloat light_diffuse[]  = { 0.8f, 0.6f, 0.6f, 1.0f };
 const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat light_position[] = { 2.0f, 1.0f, 0.0f, 1.0f };
+GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
 
 const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -214,18 +214,18 @@ static void display(void)
     const double a = t*0.5;
     
     //rotate around y axis
-     /*GLfloat modelMatrix[] = {
+     GLfloat modelMatrix[] = {
     	cos(a),0.0f,sin(a),0.0f,
     	0.0f,1.0f,0.0f,0.0f,
     	-sin(a),0.0f,cos(a),0.0f,
-    	0.0f,0.0f,0.0f,1.0f};*/
+    	0.0f,0.0f,0.0f,1.0f};
     	
 	//rotate around x axis
-    GLfloat modelMatrix[] = {
+    /*GLfloat modelMatrix[] = {
     	1.0f,0.0f,0.0f,0.0f,
     	0.0f,cos(a),-sin(a),0.0f,
     	0.0f,sin(a),cos(a),0.0f,
-    	0.0f,0.0f,0.0f,1.0f};
+    	0.0f,0.0f,0.0f,1.0f};*/
     /*GLfloat modelMatrix[] = {
     	1.0f,0.0f,0.0f,0.0f,
     	0.0f,1.0f,0.0f,0.0f,
@@ -236,11 +236,17 @@ static void display(void)
     GLint viewLoc = glGetUniformLocation(shader->id(),"viewMatrix");
     GLint scalarLoc = glGetUniformLocation(shader->id(),"scalar");
     GLint lightLoc = glGetUniformLocation(shader->id(),"lightPosition");
+    GLint lightAmb = glGetUniformLocation(shader->id(),"lightAmbient");
+    GLint lightDiff = glGetUniformLocation(shader->id(),"lightDiffuse");
+    GLint lightSpec = glGetUniformLocation(shader->id(),"lightSpecular");
     shader->bind();
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
     glUniform1f(scalarLoc,6.0f);
     glUniform4fv(lightLoc,1,light_position);
+    glUniform4fv(lightAmb,1,light_ambient);
+    glUniform4fv(lightDiff,1,light_diffuse);
+    glUniform4fv(lightSpec,1,light_specular);
 
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
