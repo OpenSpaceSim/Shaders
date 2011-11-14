@@ -148,30 +148,106 @@ void calculateModelNormals(vertex* normals, GLint polygonSize)
 
 /* GLUT callback Handlers */
 
-static void resize(int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
+GLfloat viewMatrix[16];
 
 //lighting and material information
 const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
 const GLfloat light_diffuse[]  = { 0.8f, 0.9f, 1.0f, 1.0f };
 const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+GLfloat light_position[] = { 2.0f, 1.0f, 0.0f, 1.0f };
 
 const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
 const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat high_shininess[] = { 100.0f };
 
+void BuildPerspProjMat(float *m, float fov, float aspect,
+float znear, float zfar)
+{
+  float xymax = znear * tan(fov * (3.14159/360.0));
+  float ymin = -xymax;
+  float xmin = -xymax;
+
+  float width = xymax - xmin;
+  float height = xymax - ymin;
+
+  float depth = zfar - znear;
+  float q = -(zfar + znear) / depth;
+  float qn = -2 * (zfar * znear) / depth;
+
+  float w = 2 * znear / width;
+  w = w / aspect;
+  float h = 2 * znear / height;
+  
+
+  m[0]  = w;
+  m[1]  = 0;
+  m[2]  = 0;
+  m[3]  = 0;
+
+  m[4]  = 0;
+  m[5]  = h;
+  m[6]  = 0;
+  m[7]  = 0;
+
+  m[8]  = 0;
+  m[9]  = 0;
+  m[10] = q;
+  m[11] = -1;
+
+  m[12] = 0;
+  m[13] = 0;
+  m[14] = qn;
+  m[15] = 0;
+}
+
+static void resize(int width, int height)
+{
+    glViewport(0, 0, width, height);
+    const float ar = (float) width / (float) height;
+    BuildPerspProjMat(viewMatrix, 90.0, ar, 0.1, 100);
+}
+
 static void display(void)
 {
     const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    const double a = t*9.0;
+    const double a = t*0.5;
+    
+    //rotate around y axis
+     /*GLfloat modelMatrix[] = {
+    	cos(a),0.0f,sin(a),0.0f,
+    	0.0f,1.0f,0.0f,0.0f,
+    	-sin(a),0.0f,cos(a),0.0f,
+    	0.0f,0.0f,0.0f,1.0f};*/
+    	
+	//rotate around x axis
+    GLfloat modelMatrix[] = {
+    	1.0f,0.0f,0.0f,0.0f,
+    	0.0f,cos(a),-sin(a),0.0f,
+    	0.0f,sin(a),cos(a),0.0f,
+    	0.0f,0.0f,0.0f,1.0f};
+    /*GLfloat modelMatrix[] = {
+    	1.0f,0.0f,0.0f,0.0f,
+    	0.0f,1.0f,0.0f,0.0f,
+    	0.0f,0.0f,1.0f,0.0f,
+    	0.0f,0.0f,0.0f,1.0f};*/
+
+    GLint modelLoc = glGetUniformLocation(shader->id(),"modelMatrix");
+    GLint viewLoc = glGetUniformLocation(shader->id(),"viewMatrix");
+    GLint scalarLoc = glGetUniformLocation(shader->id(),"scalar");
+    GLint lightLoc = glGetUniformLocation(shader->id(),"lightPosition");
+    shader->bind();
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
+    glUniform1f(scalarLoc,6.0f);
+    glUniform4fv(lightLoc,1,light_position);
+
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-    shader->bind();
+    
+    
+    
     
     glBindVertexArray(vertexArrays[0]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
@@ -259,6 +335,8 @@ int main(int argc, char *argv[])
     std::cout << "Using OpenGL: " << glVersion[0] << "." << glVersion[1] << std::endl;
 
     checkError();
+    
+    BuildPerspProjMat(viewMatrix, 90.0, 4.0/3.0, 0.1, 100);
 
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
@@ -308,7 +386,7 @@ int main(int argc, char *argv[])
     checkError();
     glBindVertexArray(vertexArrays[0]);
     checkError();
-    glGenBuffers(2, vertexBuffers);
+    glGenBuffers(3, vertexBuffers);
     checkError();
     glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[0]);
     glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), vertices, GL_STATIC_DRAW);
@@ -319,13 +397,20 @@ int main(int argc, char *argv[])
     checkError();
     glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     checkError();
+    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), normals, GL_STATIC_DRAW);
+    checkError();
+    glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    checkError();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
     glBindVertexArray(0);
     
     checkError();
     
     shader = new Shader("shader.vert","shader.frag");
+    
+    checkError();
 
     glutMainLoop();
 
