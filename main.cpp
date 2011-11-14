@@ -293,10 +293,15 @@ static void key(unsigned char key, int x, int y)
 
     glutPostRedisplay();
 }
-
+double last = 0.0;
 static void idle(void)
 {
-    glutPostRedisplay();
+    const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    if((t - last) > (1.0/60.0))
+    {
+    	last = t;
+	glutPostRedisplay();
+    }
 }
 
 int main(int argc, char *argv[])
