@@ -152,7 +152,7 @@ GLfloat viewMatrix[16];
 
 //lighting and material information
 const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.3f, 1.0f };
-const GLfloat light_diffuse[]  = { 0.8f, 0.6f, 0.6f, 1.0f };
+const GLfloat light_diffuse[]  = { 0.8f, 0.6f, 0.4f, 1.0f };
 const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
 
