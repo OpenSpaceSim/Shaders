@@ -115,9 +115,9 @@ void Shader::init(const char *vsFile, const char *fsFile) {
 	glAttachShader(shader_id, shader_vp); // Attach a vertex shader to the program
     glAttachShader(shader_id, shader_fp); // Attach the fragment shader to the program
 
-	glBindAttribLocation(shader_id, 0, "in_Position"); // Bind a constant attribute location for positions of vertices
+	/*glBindAttribLocation(shader_id, 0, "in_Position"); // Bind a constant attribute location for positions of vertices
 	glBindAttribLocation(shader_id, 1, "in_Color"); // Bind another constant attribute location, this time for color
-	glBindAttribLocation(shader_id, 2, "in_Normal");
+	glBindAttribLocation(shader_id, 2, "in_Normal");*/
 
     glLinkProgram(shader_id); // Link the vertex and fragment shaders in the program
     validateProgram(shader_id); // Validate the shader program

@@ -16,6 +16,58 @@
 
 using namespace std;
 
+//load Bitmap file
+// Struct of bitmap file.
+struct BitMapFile
+{
+   int sizeX;
+   int sizeY;
+   unsigned char *data;
+};
+
+// Routine to read a bitmap file.
+// Works only for uncompressed bmp files of 24-bit color.
+BitMapFile *getBMPData(string filename)
+{
+   BitMapFile *bmp = new BitMapFile;
+   unsigned int size, offset, headerSize;
+  
+   // Read input file name.
+   ifstream infile(filename.c_str(), ios::binary);
+ 
+   // Get the starting point of the image data.
+   infile.seekg(10);
+   infile.read((char *) &offset, 4); 
+   
+   // Get the header size of the bitmap.
+   infile.read((char *) &headerSize,4);
+
+   // Get width and height values in the bitmap header.
+   infile.seekg(18);
+   infile.read( (char *) &bmp->sizeX, 4);
+   infile.read( (char *) &bmp->sizeY, 4);
+
+   // Allocate buffer for the image.
+   size = bmp->sizeX * bmp->sizeY * 24;
+   bmp->data = new unsigned char[size];
+
+   // Read bitmap data.
+   infile.seekg(offset);
+   infile.read((char *) bmp->data , size);
+   
+   // Reverse color from bgr to rgb.
+   int temp;
+   for (int i = 0; i < size; i += 3)
+   { 
+      temp = bmp->data[i];
+	  bmp->data[i] = bmp->data[i+2];
+	  bmp->data[i+2] = temp;
+   }
+
+   return bmp;
+}
+
+
 struct vertex
 {
     float x;
@@ -26,10 +78,11 @@ struct vertex
 GLuint vertexCount;
 vertex* vertices;
 vertex* normals;
-vertex* colors;
+GLfloat* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
 GLuint vertexBuffers[2];
+GLuint textures[2];
 
 int wireframe = 0;
 int show_normals = 0;
@@ -239,14 +292,18 @@ static void display(void)
     GLint lightAmb = glGetUniformLocation(shader->id(),"lightAmbient");
     GLint lightDiff = glGetUniformLocation(shader->id(),"lightDiffuse");
     GLint lightSpec = glGetUniformLocation(shader->id(),"lightSpecular");
+    GLint colorTex = glGetUniformLocation(shader->id(),"colorTex");
     shader->bind();
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
-    glUniform1f(scalarLoc,6.0f);
+    glUniform1f(scalarLoc,5.0f);
     glUniform4fv(lightLoc,1,light_position);
     glUniform4fv(lightAmb,1,light_ambient);
     glUniform4fv(lightDiff,1,light_diffuse);
     glUniform4fv(lightSpec,1,light_specular);
+    glUniform1i(colorTex,0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,textures[0]);
 
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -257,6 +314,7 @@ static void display(void)
     
     glBindVertexArray(vertexArrays[0]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+    
     glBindVertexArray(0);
     
     shader->unbind();
@@ -344,6 +402,10 @@ int main(int argc, char *argv[])
     glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     std::cout << "Using OpenGL: " << glVersion[0] << "." << glVersion[1] << std::endl;
+    
+    int textureUnits;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,&textureUnits);
+    std::cout << "Maximum image texture units: " << textureUnits << endl;
 
     checkError();
     
@@ -370,25 +432,50 @@ int main(int argc, char *argv[])
     normals = new vertex[vertexCount];
     calculateModelNormals(normals,4);
     
-    colors = new vertex[vertexCount];
+    vertex* newNormals = new vertex[vertexCount];
+    
     for(int i=0;i<vertexCount;i++)
     {
-    	switch(i%1)
+    	float count = 1.0f;
+    	newNormals[i].x = normals[i].x;
+    	newNormals[i].y = normals[i].y;
+    	newNormals[i].z = normals[i].z;
+    	for(int j=0;j<vertexCount;j++)
+    	{
+    		if(vertices[i].x == vertices[j].x && vertices[i].y == vertices[j].y && vertices[i].z == vertices[j].z)
+    		{
+    			newNormals[i].x += normals[j].x;
+    			newNormals[i].y += normals[j].y;
+    			newNormals[i].z += normals[j].z;
+    			count++;
+    		}
+	}
+	newNormals[i].x /= count;
+	newNormals[i].y /= count;
+	newNormals[i].z /= count;
+    }
+    
+    
+    texCoords = new GLfloat[vertexCount*2];
+    for(int i=0;i<vertexCount*2;i+=2)
+    {
+    	switch(i%8)
     	{
     		case 0:
-    			colors[i].x = 1.0f;
-    			colors[i].y = 0.0f;
-    			colors[i].z = 0.0f;
-    			break;
-		case 1:
-    			colors[i].x = 0.0f;
-    			colors[i].y = 1.0f;
-    			colors[i].z = 0.0f;
+    			texCoords[i] = 1.0f;
+    			texCoords[i+1] = 1.0f;
     			break;
 		case 2:
-    			colors[i].x = 0.0f;
-    			colors[i].y = 0.0f;
-    			colors[i].z = 1.0f;
+    			texCoords[i] = 0.0f;
+    			texCoords[i+1] = 1.0f;
+    			break;
+		case 4:
+    			texCoords[i] = 1.0f;
+    			texCoords[i+1] = 0.0f;
+    			break;
+		case 6:
+			texCoords[i] = 0.0f;
+    			texCoords[i+1] = 0.0f;
     			break;
 	}
     }
@@ -404,11 +491,12 @@ int main(int argc, char *argv[])
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[1]);
     checkError();
-    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), colors, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(GLfloat)*2, texCoords, GL_STATIC_DRAW);
     checkError();
-    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer((GLuint)1, 2, GL_FLOAT, GL_FALSE, 0, 0);
     checkError();
-    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), normals, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[2]);
+    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), newNormals, GL_STATIC_DRAW);
     checkError();
     glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
     checkError();
@@ -420,8 +508,33 @@ int main(int argc, char *argv[])
     checkError();
     
     shader = new Shader("shader.vert","shader.frag");
+    glBindAttribLocation(shader->id(), vertexBuffers[0], "in_Position"); // Bind a constant attribute location for positions of vertices
+	glBindAttribLocation(shader->id(), vertexBuffers[1], "in_TexCoords"); // Bind another constant attribute location, this time for color
+	glBindAttribLocation(shader->id(), vertexBuffers[2], "in_Normal");
     
     checkError();
+    cout << "allocating texture" <<endl;
+    glGenTextures(1,textures);
+    checkError();
+    cout << "loading image from file" << endl;
+    BitMapFile* image = getBMPData("brick.bmp");
+    cout << "binding texture" << endl;
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    checkError();
+    cout << "setting texture parameters" << endl;
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+  checkError();
+  cout << "loading texture data" << endl;
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+  checkError();
+  cout << "generating mipmaps" << endl;
+  glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+//  delete image; //free our copy of the image
+  
+  checkError();
 
     glutMainLoop();
 
