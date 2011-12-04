@@ -214,14 +214,21 @@ int main(int argc, char *argv[]) {
 	
 	//extract model data from scene
 	
+	aiMatrix4x4 modelMatrix;
+	
 	// scale the whole asset to fit into our view frustum 
 	float tmp = scene_max.x-scene_min.x;
 	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
 	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
 	tmp = 1.f / tmp;
 	//can scale by tmp to normalize matrix ie: glScalef(tmp, tmp, tmp);
+	aiMatrix4x4::Scaling(aiVector3D(tmp,tmp,tmp),modelMatrix);
 	
 	//can center the model ie: glTranslatef( -scene_center.x, -scene_center.y, -scene_center.z );
+	aiMatrix4x4 scalingMatrix;
+	aiMatrix4x4::Translation(aiVector3D(-scene_center.x, -scene_center.y, -scene_center.z ), scalingMatrix);
+	modelMatrix *= scalingMatrix;
+	
 	stack<const struct aiNode*> nodeStack;
 	nodeStack.push(scene->mRootNode);
 	const struct aiNode* node=scene->mRootNode;
