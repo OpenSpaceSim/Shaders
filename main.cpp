@@ -92,9 +92,9 @@ static void display(void) {
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	aiMatrix4x4::RotationX(a,rotation);
-	aiMatrix4x4::RotationZ(-3.1415926535/2,tmp);
-	rotation *=tmp;
+	aiMatrix4x4::RotationY(a,rotation);
+	aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
+	//rotation *=tmp;
 	rotation *= modelMatrix;
 	
 	shader->bind();
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 	checkError();
 	cout << "Setup GLUT callbacks" << endl;
 
-	glClearColor(0,0,0,0);
+	glClearColor(.4,.5,.5,0);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 	glEnable(GL_DEPTH_TEST);

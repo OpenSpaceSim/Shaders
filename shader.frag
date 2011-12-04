@@ -35,5 +35,5 @@ void main(void)
       
       float angle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_Normal),0.0);
       vec4 intensity = lightAmbient + angle*lightDiffuse + pow(angle,8)*lightSpecular;
-      FragColor = ((depth+baseColor)/2.0)*intensity*(1.0/length(pass_LightPos));
+      FragColor = baseColor*intensity*(1.0/length(pass_LightPos));
 }
