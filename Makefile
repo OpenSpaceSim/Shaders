@@ -1,4 +1,4 @@
-CC=g++
+CC=clang++
 CFLAGS+=-g
 LDFLAGS+=-lGL -lGLU -lglut -lGLEW
 

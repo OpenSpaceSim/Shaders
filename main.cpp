@@ -81,7 +81,7 @@ vertex* normals;
 GLfloat* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
-GLuint vertexBuffers[2];
+GLuint vertexBuffers[3];
 GLuint textures[2];
 
 int wireframe = 0;
