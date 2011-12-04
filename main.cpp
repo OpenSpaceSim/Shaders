@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
     cout << "GLUT version " << glutGet(GLUT_VERSION) << endl;
     
-    glutInitContextVersion(3, 2);
+    glutInitContextVersion(3, 3);
     //glutInitContextFlags (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     checkError();
     glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
