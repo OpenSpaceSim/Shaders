@@ -248,17 +248,17 @@ int main(int argc, char *argv[]) {
 				texCoords[i+1] = 1.0f;
 				break;
 			case 2:
-					texCoords[i] = 0.0f;
-					texCoords[i+1] = 1.0f;
-					break;
+				texCoords[i] = 0.0f;
+				texCoords[i+1] = 1.0f;
+				break;
 			case 4:
-					texCoords[i] = 1.0f;
-					texCoords[i+1] = 0.0f;
-					break;
+				texCoords[i] = 1.0f;
+				texCoords[i+1] = 0.0f;
+				break;
 			case 6:
 				texCoords[i] = 0.0f;
-					texCoords[i+1] = 0.0f;
-					break;
+				texCoords[i+1] = 0.0f;
+				break;
 		}
 	}
 	checkError();

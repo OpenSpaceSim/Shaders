@@ -1,12 +1,17 @@
 CC=clang++
 CFLAGS+=-g
-LDFLAGS+=-lGL -lGLU -lglut -lGLEW
+LDFLAGS+=-L. -lassimp -lGL -lGLU -lglut -lGLEW
+OFILES=main.o shader.o util.o
 
 %.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-openSpaceSim : main.o shader.o util.o
-	$(CC) -o openSpaceSim main.o shader.o util.o $(LDFLAGS)
+openSpaceSim : $(OFILES)
+	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
+	
+go:
+	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
+	./openSpaceSim
 	
 .PHONY: clean
 
