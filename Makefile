@@ -1,6 +1,6 @@
 CC=clang++
 CFLAGS+=-g
-LDFLAGS+=-lGL -lGLU -lglut -lGLEW
+LDFLAGS+=-L. -lassimp -lGL -lGLU -lglut -lGLEW
 
 %.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
