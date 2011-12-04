@@ -331,15 +331,6 @@ static void key(unsigned char key, int x, int y)
         case 'q':
             exit(0);
             break;
-	case 'f':
-		wireframe = !wireframe;
-		break;
-	case 'n':
-		show_normals = !show_normals;
-		break;
-	case 'l':
-		lighting = !lighting;
-		break;
 	case 'c':
 		culling = !culling;
 		if(culling)
