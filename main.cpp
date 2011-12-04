@@ -34,7 +34,7 @@ ostream &operator<<(ostream &ostr, const aiMatrix4x4 &o) {
 GLuint vertexCount;
 vertex* vertices;
 vertex* normals;
-GLfloat* texCoords;
+vertex* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
 GLuint vertexBuffers[3];
@@ -230,6 +230,7 @@ int main(int argc, char *argv[]) {
 	const struct aiNode* node=scene->mRootNode;
 	vector<vertex> verts;
 	vector<vertex> norms;
+	vector<vertex> texvec;
 	vertexCount=0;
 	while(nodeStack.size() > 0)
 	{
@@ -241,8 +242,10 @@ int main(int argc, char *argv[]) {
 				const struct aiFace* face = &mesh->mFaces[t];
 				for(unsigned int i = 0; i < face->mNumIndices; i++) {
 					int index = face->mIndices[i];
-					if(mesh->mNormals != NULL) 
+					if(mesh->mNormals != NULL)
 						norms.push_back(mesh->mNormals[index]);
+					if(mesh->HasTextureCoords(0))
+						texvec.push_back(mesh->mTextureCoords[0][index]);
 					verts.push_back(mesh->mVertices[index]);
 					vertexCount++;
 				}
@@ -257,10 +260,12 @@ int main(int argc, char *argv[]) {
 	
 	vertices = new vertex[vertexCount];
 	normals = new vertex[vertexCount];
+	texCoords = new vertex[vertexCount];
 	for(int i=0;i<vertexCount;i++)
 	{
 		vertices[i]=verts[i];
 		normals[i]=norms[i];
+		texCoords[i]=texvec[i];
 	}
 	//calculateModelNormals(normals,4);
 	
@@ -285,7 +290,7 @@ int main(int argc, char *argv[]) {
 	}*/
 	
 	
-	texCoords = new GLfloat[vertexCount*2];
+	/*texCoords = new GLfloat[vertexCount*2];
 	for(int i=0;i<vertexCount*2;i+=2) {
 		switch(i%8) {
 			case 0:
@@ -305,7 +310,7 @@ int main(int argc, char *argv[]) {
 				texCoords[i+1] = 0.0f;
 				break;
 		}
-	}
+	}*/
 	checkError();
 	glGenVertexArrays(1, vertexArrays);
 	checkError();
@@ -318,9 +323,9 @@ int main(int argc, char *argv[]) {
 	glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[1]);
 	checkError();
-	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(GLfloat)*2, texCoords, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), texCoords, GL_STATIC_DRAW);
 	checkError();
-	glVertexAttribPointer((GLuint)1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	checkError();
 	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[2]);
 	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), normals, GL_STATIC_DRAW);

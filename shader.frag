@@ -1,6 +1,6 @@
 #version 330 core
 
-in vec2 pass_TexCoords;
+in vec3 pass_TexCoords;
 in vec3 pass_Normal;
 in vec4 pass_LightPos;
 in vec4 pass_Position;
@@ -15,7 +15,7 @@ uniform sampler2D colorTex;
 void main(void)
 {
       //calculate basic texture color
-      vec4 baseColor = texture(colorTex,pass_TexCoords);
+      vec4 baseColor = texture(colorTex,pass_TexCoords.xy);
       
       //////////////////////////////////////
       //parallax mapping, doesn't work yet//
@@ -28,7 +28,7 @@ void main(void)
       vec3 paravec = normalize(cross(pass_Normal,bipara));
       float parallaxLength = avg/tan(acos(dot(eyevec,paravec)));
       vec2 parallaxOffset = vec2(parallaxLength/sqrt(2.0),parallaxLength/sqrt(2.0));
-      vec4 paraColor = texture(colorTex,pass_TexCoords-parallaxOffset);
+      vec4 paraColor = texture(colorTex,pass_TexCoords.xy-parallaxOffset);
       
       
       float angle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_Normal),0.0);
