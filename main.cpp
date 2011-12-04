@@ -95,7 +95,7 @@ static void display(void) {
 	shader->bind();
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
-	glUniform1f(scalarLoc,1.0f);
+	glUniform1f(scalarLoc,5.0f);
 	glUniform4fv(lightLoc,1,light_position);
 	glUniform4fv(lightAmb,1,light_ambient);
 	glUniform4fv(lightDiff,1,light_diffuse);
@@ -107,7 +107,7 @@ static void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
 	glBindVertexArray(vertexArrays[0]);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+	glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 	
 	glBindVertexArray(0);
 	
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
 
 	glClearColor(0,0,0,0);
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glCullFace(GL_FRONT);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	checkError();
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
 	stream = aiGetPredefinedLogStream(aiDefaultLogStream_FILE,"assimp_log.txt");
 	aiAttachLogStream(&stream);
 
-	if( 0 != loadasset( argc >= 2 ? argv[1] : "../../../ship.obj")) {
+	if( 0 != loadasset( argc >= 2 ? argv[1] : "ship.obj")) {
 		if( argc != 1 || 0 != loadasset( "../../../test/models-nonbsd/X/ship.obj") && 0 != loadasset( "../../test/models/X/Testwuson.X")) { 
 			return -1;
 		}
