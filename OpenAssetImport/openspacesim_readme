@@ -1,0 +1,5 @@
+This is Open Asset Import Library, for importing various model file types into OpenGL.
+
+The author was awesome enough to write sample code for importing a single model and rendering a simple scene with it. This is in samples.
+
+The working test code is in "samples"
