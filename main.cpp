@@ -68,12 +68,9 @@ static void display(void) {
 	const double a = t*0.5;
 	
 	//rotate around y axis
-	GLfloat modelMatrix[] = {
-		cos(a),0.0f,sin(a),0.0f,
-		0.0f,1.0f,0.0f,0.0f,
-		-sin(a),0.0f,cos(a),0.0f,
-		0.0f,0.0f,0.0f,1.0f
-	};
+	aiMatrix4x4 rotation;
+	rotation = aiMatrix4x4::RotationY(a,rotation);
+	GLfloat *modelMatrix = (GLfloat*)&rotation;
 	
 	GLint modelLoc  = shader->getUniformLocation("modelMatrix");
 	GLint viewLoc   = shader->getUniformLocation("viewMatrix");
