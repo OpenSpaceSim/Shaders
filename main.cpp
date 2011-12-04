@@ -21,8 +21,6 @@
 #include "shader.h"
 #include "util.h"
 
-#include "shiptexture.xbm"
-
 using namespace std;
 
 ostream &operator<<(ostream &ostr, const aiMatrix4x4 &o) {
@@ -108,8 +106,11 @@ static void display(void) {
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
 	shader->uniform4fv("lightSpecular",*light_specular);
 	shader->uniform1i("colorTex",0);
+	shader->uniform1i("depthTex",1);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,textures[0]);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,textures[1]);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
@@ -361,10 +362,11 @@ int main(int argc, char *argv[]) {
 
 	checkError();
 	cout << "allocating texture" <<endl;
-	glGenTextures(1,textures);
+	glGenTextures(2,textures);
 	checkError();
 	cout << "loading image from file" << endl;
 	BitMapFile* image = getBMPData("shiptexture.bmp");
+	BitMapFile* depthmap = getBMPData("shipdepth.bmp");
 	cout << "binding texture" << endl;
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	checkError();
@@ -380,7 +382,21 @@ int main(int argc, char *argv[]) {
 	cout << "generating mipmaps" << endl;
 	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
 	//  delete image; //free our copy of the image
-
+	
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	
 	checkError();
 
 	glutMainLoop();
