@@ -135,7 +135,7 @@ void loadModel() {
 }
 
 void BuildPerspProjMat(float *m, float fov, float aspect, float znear, float zfar) {
-	float xymax = znear * tan(fov * (3.14159/360.0));
+	float xymax = znear * tan(fov * (3.1415926535897932384626/360.0));
 	float ymin = -xymax;
 	float xmin = -xymax;
 
