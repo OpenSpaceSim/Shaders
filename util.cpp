@@ -1,0 +1,173 @@
+#include "util.h"
+using namespace std;
+
+// Routine to read a bitmap file.
+// Works only for uncompressed bmp files of 24-bit color.
+BitMapFile *getBMPData(string filename) {
+	BitMapFile *bmp = new BitMapFile;
+	unsigned int size, offset, headerSize;
+
+	// Read input file name.
+	ifstream infile(filename.c_str(), ios::binary);
+
+	// Get the starting point of the image data.
+	infile.seekg(10);
+	infile.read((char *) &offset, 4); 
+
+	// Get the header size of the bitmap.
+	infile.read((char *) &headerSize,4);
+
+	// Get width and height values in the bitmap header.
+	infile.seekg(18);
+	infile.read( (char *) &bmp->sizeX, 4);
+	infile.read( (char *) &bmp->sizeY, 4);
+
+	// Allocate buffer for the image.
+	size = bmp->sizeX * bmp->sizeY * 24;
+	bmp->data = new unsigned char[size];
+
+	// Read bitmap data.
+	infile.seekg(offset);
+	infile.read((char *) bmp->data , size);
+
+	// Reverse color from bgr to rgb.
+	int temp;
+	for (int i = 0; i < size; i += 3) { 
+		temp = bmp->data[i];
+		bmp->data[i] = bmp->data[i+2];
+		bmp->data[i+2] = temp;
+	}
+
+	return bmp;
+}
+
+void checkError() {
+	GLenum err = glGetError();
+	if(err == GL_NO_ERROR) return;
+	cout << gluErrorString(err);
+	if(err == GL_INVALID_ENUM) { 
+		cout <<" (GL_INVALID_ENUM)" << endl;
+		return;
+	}
+	if(err == GL_INVALID_VALUE) {
+		cout << " (GL_INVALID_VALUE)"<<endl;
+		return;
+	}
+	if(err == GL_INVALID_OPERATION) {
+		cout << " (GL_INVALID_OPERATION)"<<endl;
+		return;
+	}
+	cout << " (" << err << ")" << endl;
+}
+
+//calculates average surface normal for arbitrary polygon
+void calculateSurfaceNormal(const GLfloat* polygon, GLint count, GLfloat* normal) {
+	normal[0] = 0.0f;
+	normal[1] = 0.0f;
+	normal[2] = 0.0f;
+	for(int i=0;i<(count*3);i+=3) {
+		const GLfloat* current = polygon+(i);
+		const GLfloat* next = polygon+(((i+3)%(count*3)));
+		GLfloat dx = current[0] - next[0];
+		GLfloat dy = current[1] - next[1];
+		GLfloat dz = current[2] - next[2];
+		GLfloat sx = current[0] + next[0];
+		GLfloat sy = current[1] + next[1];
+		GLfloat sz = current[2] + next[2];
+		normal[0] += dy * sz;
+		normal[1] += dz * sx;
+		normal[2] += dx * sy;
+	}
+	//normalize result
+	GLfloat avg = sqrt(normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2]);
+	normal[0] /= avg;
+	normal[1] /= avg;
+	normal[2] /= avg;
+}
+
+//calculate normals for each polygon in the model
+void calculateModelNormals(vertex* normals, GLint polygonSize) {
+	GLfloat normal[3];
+	GLfloat* polygon = (GLfloat*)malloc(3 * sizeof(GLfloat*) * polygonSize);
+	for(int i=0; (i+polygonSize)<=vertexCount; i+= polygonSize) {
+		//cout << "i=" << i << endl;
+		int k=0;
+		for(int j=0;j<3*polygonSize;j+=3) {
+			if(!((i+j+2)<(vertexCount*3))) {
+				cout << "ERROR:vertices not even multiple of polygon size\n";
+				return;
+			}
+			polygon[j] = vertices[i+k].x;
+			polygon[j+1] = vertices[i+k].y;
+			polygon[j+2] = vertices[i+k].z;
+			k++;
+		}
+		calculateSurfaceNormal(polygon,polygonSize,normal);
+		for(int j=0;j<polygonSize;j++) {
+			normals[i+j].x = normal[0];
+			normals[i+j].y = normal[1];
+			normals[i+j].z = normal[2];
+		}
+	}
+}
+
+void loadModel() {
+	ifstream file("ncc1701.data");
+	if(!file.is_open()) {
+		cout << "unable to open file \n";
+		return;
+	}
+	vector<vertex> vertvec;
+	while(!file.eof()) {
+		vertex point;
+		file >> point.x;
+		file >> point.y;
+		file >> point.z;
+		vertvec.push_back(point);
+	}
+	vertices = new vertex[vertvec.size()];
+	for(int i=0;i<vertvec.size();i++) {
+		vertices[i].x = vertvec[i].x;
+		vertices[i].y = vertvec[i].y;
+		vertices[i].z = vertvec[i].z;
+	}
+	vertexCount = vertvec.size();
+}
+
+void BuildPerspProjMat(float *m, float fov, float aspect, float znear, float zfar) {
+	float xymax = znear * tan(fov * (3.14159/360.0));
+	float ymin = -xymax;
+	float xmin = -xymax;
+
+	float width = xymax - xmin;
+	float height = xymax - ymin;
+
+	float depth = zfar - znear;
+	float q = -(zfar + znear) / depth;
+	float qn = -2 * (zfar * znear) / depth;
+
+	float w = 2 * znear / width;
+	w = w / aspect;
+	float h = 2 * znear / height;
+
+
+	m[0]  = w;
+	m[1]  = 0;
+	m[2]  = 0;
+	m[3]  = 0;
+
+	m[4]  = 0;
+	m[5]  = h;
+	m[6]  = 0;
+	m[7]  = 0;
+
+	m[8]  = 0;
+	m[9]  = 0;
+	m[10] = q;
+	m[11] = -1;
+
+	m[12] = 0;
+	m[13] = 0;
+	m[14] = qn;
+	m[15] = 0;
+}
