@@ -22,7 +22,7 @@ LIBFLAGS = -L.
 OUTPUT = samplegl
 
 all:	$(OBJECTS)
-	gcc -o $(OUTPUT) $(INCLUDEFLAGS) -s Sample_SimpleOpenGL.c $(LIBFLAGS) -lassimp -Wl,-Bdynamic -lstdc++ -lglut -lGL -lGLU
+	gcc -o $(OUTPUT) $(INCLUDEFLAGS) -s Sample_SimpleOpenGL.c $(LIBFLAGS) -lassimp -Wl,-Bdynamic -lstdc++ -lglut -lGL -lGLU -lm
 .PHONY: clean -R .
 clean:
 	-rm *.o
