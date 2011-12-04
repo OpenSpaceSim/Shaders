@@ -32,6 +32,8 @@ GLuint vertexArrays[2];
 GLuint vertexBuffers[3];
 GLuint textures[2];
 
+aiMatrix4x4 modelMatrix;
+
 const struct aiScene* scene = NULL;
 struct aiVector3D scene_min, scene_max, scene_center;
 
@@ -71,6 +73,7 @@ static void display(void) {
 	//rotate around y axis
 	aiMatrix4x4 rotation;
 	rotation = aiMatrix4x4::RotationY(a,rotation);
+	rotation *= modelMatrix;
 	GLfloat *modelMatrix = (GLfloat*)&rotation;
 	
 	GLint modelLoc  = shader->getUniformLocation("modelMatrix");
@@ -84,7 +87,7 @@ static void display(void) {
 	shader->bind();
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
-	glUniform1f(scalarLoc,5.0f);
+	glUniform1f(scalarLoc,1.0f);
 	glUniform4fv(lightLoc,1,light_position);
 	glUniform4fv(lightAmb,1,light_ambient);
 	glUniform4fv(lightDiff,1,light_diffuse);
@@ -214,7 +217,7 @@ int main(int argc, char *argv[]) {
 	
 	//extract model data from scene
 	
-	aiMatrix4x4 modelMatrix;
+	
 	
 	// scale the whole asset to fit into our view frustum 
 	float tmp = scene_max.x-scene_min.x;
@@ -261,9 +264,14 @@ int main(int argc, char *argv[]) {
 	
 	vertices = new vertex[vertexCount];
 	normals = new vertex[vertexCount];
+	for(int i=0;i<vertexCount;i++)
+	{
+		vertices[i]=verts[i];
+		normals[i]=norms[i];
+	}
 	//calculateModelNormals(normals,4);
 	
-	vertex* newNormals = new vertex[vertexCount];
+	//vertex* newNormals = new vertex[vertexCount];
 	
 	/*for(int i=0;i<vertexCount;i++) {
 		float count = 1.0f;
@@ -322,7 +330,7 @@ int main(int argc, char *argv[]) {
 	glVertexAttribPointer((GLuint)1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	checkError();
 	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[2]);
-	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), newNormals, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), normals, GL_STATIC_DRAW);
 	checkError();
 	glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	checkError();
