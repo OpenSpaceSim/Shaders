@@ -92,13 +92,15 @@ static void display(void) {
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	rotation = aiMatrix4x4::RotationY(a,rotation);
+	aiMatrix4x4::RotationY(a,rotation);
+	aiMatrix4x4::RotationZ(3.1415926535/2,tmp);
+	rotation *=tmp;
 	rotation *= modelMatrix;
 	
 	shader->bind();
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
 	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
-	shader->uniform1f("scalar",5.0f);
+	shader->uniform1f("scalar",3.4f);
 	shader->uniform4fv("lightPosition",light_position);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
