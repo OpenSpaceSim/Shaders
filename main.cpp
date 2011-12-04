@@ -12,6 +12,11 @@
 #include <iostream>
 #include <vector>
 
+// assimp include files. These three are usually needed.
+#include "assimp.h"
+#include "aiPostProcess.h"
+#include "aiScene.h"
+
 #include "shader.h"
 #include "util.h"
 
@@ -31,6 +36,11 @@ int show_normals = 0;
 int lighting = 1;
 int culling = 1;
 float alpha = 1.0f;
+
+#define aisgl_min(x,y) (x<y?x:y)
+#define aisgl_max(x,y) (y>x?y:x)
+
+typedef struct aiVector3D vector;
 
 /* GLUT callback Handlers */
 
@@ -185,8 +195,26 @@ int main(int argc, char *argv[]) {
 	glDepthFunc(GL_LESS);
 	checkError();
 	cout << "GL setup complete" << endl;
+	
+	struct aiLogStream stream;
+	// get a handle to the predefined STDOUT log stream and attach
+	// it to the logging system. It will be active for all further
+	// calls to aiImportFile(Ex) and aiApplyPostProcessing.
+	stream = aiGetPredefinedLogStream(aiDefaultLogStream_STDOUT,NULL);
+	aiAttachLogStream(&stream);
+	
+	// ... exactly the same, but this stream will now write the
+	// log file to assimp_log.txt
+	stream = aiGetPredefinedLogStream(aiDefaultLogStream_FILE,"assimp_log.txt");
+	aiAttachLogStream(&stream);
 
-	loadModel();
+	if( 0 != loadasset( argc >= 2 ? argv[1] : "../../../ship.obj")) {
+		if( argc != 1 || 0 != loadasset( "../../../test/models-nonbsd/X/ship.obj") && 0 != loadasset( "../../test/models/X/Testwuson.X")) { 
+			return -1;
+		}
+	}
+	
+	//load model data
 	
 	normals = new vertex[vertexCount];
 	calculateModelNormals(normals,4);
@@ -291,6 +319,16 @@ int main(int argc, char *argv[]) {
 	checkError();
 
 	glutMainLoop();
+	
+	// cleanup - calling 'aiReleaseImport' is important, as the library 
+	// keeps internal resources until the scene is freed again. Not 
+	// doing so can cause severe resource leaking.
+	aiReleaseImport(scene);
+	
+	// We added a log stream to the library, it's our job to disable it
+	// again. This will definitely release the last resources allocated
+	// by Assimp.
+	aiDetachAllLogStreams();
 
 	return EXIT_SUCCESS;
 }
