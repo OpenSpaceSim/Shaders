@@ -36,13 +36,13 @@ public:
 	GLint getUniformLocation(const char *name) {
 		return glGetUniformLocation(shader_id,name);
 	}
-	void uniformMatrix4fv(const char *name, GLsizei count, GLboolean transpose, const GLfloat * value) {
+	void uniformMatrix4fv(const char *name, const GLfloat * value, GLsizei count=1, GLboolean transpose=GL_FALSE) {
 		glUniformMatrix4fv(getUniformLocation(name), count, transpose, value);
 	}
-	void uniformMatrix1f(const char *name, GLfloat value) {
+	void uniform1f(const char *name, GLfloat value) {
 		glUniform1f(getUniformLocation(name),value);
 	}
-	void uniform4fv(const char *name, GLsizei count, const GLfloat *value) {
+	void uniform4fv(const char *name, const GLfloat *value, GLsizei count=1) {
 		glUniform4fv(getUniformLocation(name), count, value);
 	}
 	void uniform1i(const char *name, GLint value) {

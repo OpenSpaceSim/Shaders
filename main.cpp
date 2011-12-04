@@ -84,23 +84,15 @@ static void display(void) {
 	rotation *= modelMatrix;
 	GLfloat *modelMatrix = (GLfloat*)&rotation;
 	
-	GLint modelLoc  = shader->getUniformLocation("modelMatrix");
-	GLint viewLoc   = shader->getUniformLocation("viewMatrix");
-	GLint scalarLoc = shader->getUniformLocation("scalar");
-	GLint lightLoc  = shader->getUniformLocation("lightPosition");
-	GLint lightAmb  = shader->getUniformLocation("lightAmbient");
-	GLint lightDiff = shader->getUniformLocation("lightDiffuse");
-	GLint lightSpec = shader->getUniformLocation("lightSpecular");
-	GLint colorTex  = shader->getUniformLocation("colorTex");
 	shader->bind();
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
-	glUniform1f(scalarLoc,5.0f);
-	glUniform4fv(lightLoc,1,light_position);
-	glUniform4fv(lightAmb,1,light_ambient);
-	glUniform4fv(lightDiff,1,light_diffuse);
-	glUniform4fv(lightSpec,1,light_specular);
-	glUniform1i(colorTex,0);
+	shader->uniformMatrix4fv("modelMatrix",modelMatrix);
+	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
+	shader->uniform1f("scalar",5.0f);
+	shader->uniform4fv("lightPosition",light_position);
+	shader->uniform4fv("lightAmbient",light_ambient);
+	shader->uniform4fv("lightDiffuse",light_diffuse);
+	shader->uniform4fv("lightSpecular",light_specular);
+	shader->uniform1i("colorTex",0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,textures[0]);
 
