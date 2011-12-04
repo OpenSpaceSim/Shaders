@@ -1,14 +1,14 @@
 #version 330 core
 
 in vec3 in_Position;
-in vec2 in_TexCoords;
+in vec3 in_TexCoords;
 in vec3 in_Normal;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform float scalar;
 uniform vec4 lightPosition;
 
-out vec2 pass_TexCoords;
+out vec3 pass_TexCoords;
 out vec3 pass_Normal;
 out vec4 pass_LightPos;
 out vec4 pass_Position;

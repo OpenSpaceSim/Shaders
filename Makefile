@@ -1,12 +1,18 @@
-CC=g++
+CC=clang++
 CFLAGS+=-g
-LDFLAGS+=-lGL -lGLU -lglut -lGLEW
+LDFLAGS+=-L. -lassimp -lGL -lGLU -lglut -lGLEW
+OFILES=main.o shader.o util.o
+INCLUDEFLAGS = -I./OpenAssetImport/include 
 
 %.o: %.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) $(INCLUDEFLAGS) -c -o $@ $< $(CFLAGS)
 
-openSpaceSim : main.o shader.o
-	$(CC) -o openSpaceSim main.o shader.o $(LDFLAGS)
+openSpaceSim : $(OFILES)
+	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
+	
+go : $(OFILES)
+	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
+	./openSpaceSim ./ship.obj
 	
 .PHONY: clean
 

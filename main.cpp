@@ -11,78 +11,51 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <stack>
+
+// assimp include files. These three are usually needed.
+#include "assimp.h"
+#include "aiPostProcess.h"
+#include "aiScene.h"
 
 #include "shader.h"
+#include "util.h"
 
 using namespace std;
 
-//load Bitmap file
-// Struct of bitmap file.
-struct BitMapFile
-{
-   int sizeX;
-   int sizeY;
-   unsigned char *data;
-};
-
-// Routine to read a bitmap file.
-// Works only for uncompressed bmp files of 24-bit color.
-BitMapFile *getBMPData(string filename)
-{
-   BitMapFile *bmp = new BitMapFile;
-   unsigned int size, offset, headerSize;
-  
-   // Read input file name.
-   ifstream infile(filename.c_str(), ios::binary);
- 
-   // Get the starting point of the image data.
-   infile.seekg(10);
-   infile.read((char *) &offset, 4); 
-   
-   // Get the header size of the bitmap.
-   infile.read((char *) &headerSize,4);
-
-   // Get width and height values in the bitmap header.
-   infile.seekg(18);
-   infile.read( (char *) &bmp->sizeX, 4);
-   infile.read( (char *) &bmp->sizeY, 4);
-
-   // Allocate buffer for the image.
-   size = bmp->sizeX * bmp->sizeY * 24;
-   bmp->data = new unsigned char[size];
-
-   // Read bitmap data.
-   infile.seekg(offset);
-   infile.read((char *) bmp->data , size);
-   
-   // Reverse color from bgr to rgb.
-   int temp;
-   for (int i = 0; i < size; i += 3)
-   { 
-      temp = bmp->data[i];
-	  bmp->data[i] = bmp->data[i+2];
-	  bmp->data[i+2] = temp;
-   }
-
-   return bmp;
+ostream &operator<<(ostream &ostr, const aiMatrix4x4 &o) {
+	ostr << "[" <<o.a1 << ", " <<o.a2 << ", " <<o.a3 << ", " <<o.a4 << "\n";
+	ostr << " " <<o.b1 << ", " <<o.b2 << ", " <<o.b3 << ", " <<o.b4 << "\n";
+	ostr << " " <<o.c1 << ", " <<o.c2 << ", " <<o.c3 << ", " <<o.c4 << "\n";
+	ostr << " " <<o.d1 << ", " <<o.d2 << ", " <<o.d3 << ", " <<o.d4 << "]\n";
+	return ostr;
 }
-
-
-struct vertex
-{
-    float x;
-    float y;
-    float z;
-};
+GLfloat *operator*(aiMatrix4x4 &o) {
+	return (GLfloat*)&o;
+}
+const GLfloat *operator*(const aiMatrix4x4 &o) {
+	return (const GLfloat*)&o;
+}
+GLfloat *operator*(aiColor4D &o) {
+	return (GLfloat*)&o;
+}
+const GLfloat *operator*(const aiColor4D &o) {
+	return (const GLfloat*)&o;
+}
 
 GLuint vertexCount;
 vertex* vertices;
 vertex* normals;
-GLfloat* texCoords;
+vertex* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
-GLuint vertexBuffers[2];
+GLuint vertexBuffers[3];
 GLuint textures[2];
+
+aiMatrix4x4 modelMatrix;
+
+const struct aiScene* scene = NULL;
+struct aiVector3D scene_min, scene_max, scene_center;
 
 int wireframe = 0;
 int show_normals = 0;
@@ -90,444 +63,353 @@ int lighting = 1;
 int culling = 1;
 float alpha = 1.0f;
 
-inline void checkError()
-{
-    GLenum err = glGetError();
-    if(err != GL_NO_ERROR)
-    {
-    	cout << gluErrorString(err);
-    	if(err == GL_INVALID_ENUM)
-    	{ 
-    		cout <<" (GL_INVALID_ENUM)" << endl;
-    		return;
-	}
-    	if(err == GL_INVALID_VALUE)
-    	{
-    		cout << " (GL_INVALID_VALUE)"<<endl;
-    		return;
-	}
-	if(err == GL_INVALID_OPERATION)
-	{
-		cout << " (GL_INVALID_OPERATION)"<<endl;
-		return;
-	}
-	cout << " (" << err << ")" << endl;
-    }
-}
-
-void loadModel()
-{
-    ifstream file("ncc1701.data");
-    if(!file.is_open())
-    {
-        cout << "unable to open file \n";
-        return;
-    }
-    vector<vertex> vertvec;
-    while(!file.eof())
-    {
-        vertex point;
-        file >> point.x;
-        file >> point.y;
-        file >> point.z;
-        vertvec.push_back(point);
-    }
-    vertices = new vertex[vertvec.size()];
-    for(int i=0;i<vertvec.size();i++)
-    {
-    	vertices[i].x = vertvec[i].x;
-    	vertices[i].y = vertvec[i].y;
-    	vertices[i].z = vertvec[i].z;
-    }
-    vertexCount = vertvec.size();
-}
-//calculates average surface normal for arbitrary polygon
-void calculateSurfaceNormal(const GLfloat* polygon, GLint count, GLfloat* normal)
-{
-        normal[0] = 0.0f;
-        normal[1] = 0.0f;
-        normal[2] = 0.0f;
-        for(int i=0;i<(count*3);i+=3)
-        {
-                const GLfloat* current = polygon+(i);
-                const GLfloat* next = polygon+(((i+3)%(count*3)));
-                GLfloat dx = current[0] - next[0];
-                GLfloat dy = current[1] - next[1];
-                GLfloat dz = current[2] - next[2];
-                GLfloat sx = current[0] + next[0];
-                GLfloat sy = current[1] + next[1];
-                GLfloat sz = current[2] + next[2];
-                normal[0] += dy * sz;
-                normal[1] += dz * sx;
-                normal[2] += dx * sy;
-        }
-        //normalize result
-        GLfloat avg = sqrt(normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2]);
-        normal[0] /= avg;
-        normal[1] /= avg;
-        normal[2] /= avg;
-}
-
-//calculate normals for each polygon in the model
-void calculateModelNormals(vertex* normals, GLint polygonSize)
-{
-        GLfloat normal[3];
-        GLfloat* polygon = (GLfloat*)malloc(3 * sizeof(GLfloat*) * polygonSize);
-        for(int i=0; (i+polygonSize)<=vertexCount; i+= polygonSize)
-        {
-        	//cout << "i=" << i << endl;
-        	int k=0;
-                for(int j=0;j<3*polygonSize;j+=3)
-                {
-                	if(!((i+j+2)<(vertexCount*3)))
-                	{
-                		cout << "ERROR:vertices not even multiple of polygon size\n";
-                		return;
-                	}
-                        polygon[j] = vertices[i+k].x;
-                        polygon[j+1] = vertices[i+k].y;
-                        polygon[j+2] = vertices[i+k].z;
-                        k++;
-                }
-                calculateSurfaceNormal(polygon,polygonSize,normal);
-                for(int j=0;j<polygonSize;j++)
-                {
-                        normals[i+j].x = normal[0];
-                        normals[i+j].y = normal[1];
-                        normals[i+j].z = normal[2];
-                }
-        }
-}
+typedef struct aiVector3D vector;
 
 /* GLUT callback Handlers */
 
 GLfloat viewMatrix[16];
 
 //lighting and material information
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.3f, 1.0f };
-const GLfloat light_diffuse[]  = { 0.8f, 0.6f, 0.4f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
+const aiColor4D light_ambient(0.0f, 0.0f, 0.3f, 1.0f);
+const aiColor4D light_diffuse(0.8f, 0.6f, 0.4f, 1.0f);
+const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
+const GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
 
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_ambient[]	= { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[]	= { 0.8f, 0.8f, 0.8f, 1.0f };
 const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat high_shininess[] = { 100.0f };
 
-void BuildPerspProjMat(float *m, float fov, float aspect,
-float znear, float zfar)
-{
-  float xymax = znear * tan(fov * (3.14159/360.0));
-  float ymin = -xymax;
-  float xmin = -xymax;
-
-  float width = xymax - xmin;
-  float height = xymax - ymin;
-
-  float depth = zfar - znear;
-  float q = -(zfar + znear) / depth;
-  float qn = -2 * (zfar * znear) / depth;
-
-  float w = 2 * znear / width;
-  w = w / aspect;
-  float h = 2 * znear / height;
-  
-
-  m[0]  = w;
-  m[1]  = 0;
-  m[2]  = 0;
-  m[3]  = 0;
-
-  m[4]  = 0;
-  m[5]  = h;
-  m[6]  = 0;
-  m[7]  = 0;
-
-  m[8]  = 0;
-  m[9]  = 0;
-  m[10] = q;
-  m[11] = -1;
-
-  m[12] = 0;
-  m[13] = 0;
-  m[14] = qn;
-  m[15] = 0;
+static void resize(int width, int height) {
+	glViewport(0, 0, width, height);
+	const float ar = (float) width / (float) height;
+	BuildPerspProjMat(viewMatrix, 90.0, ar, 0.1, 100);
 }
 
-static void resize(int width, int height)
-{
-    glViewport(0, 0, width, height);
-    const float ar = (float) width / (float) height;
-    BuildPerspProjMat(viewMatrix, 90.0, ar, 0.1, 100);
-}
+static void display(void) {
+	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+	const double a = t*0.5;
+	
+	//rotate around y axis
+	aiMatrix4x4 rotation, tmp;
+	aiMatrix4x4::RotationX(a,rotation);
+	aiMatrix4x4::RotationZ(-3.1415926535/2,tmp);
+	rotation *=tmp;
+	rotation *= modelMatrix;
+	
+	shader->bind();
+	shader->uniformMatrix4fv("modelMatrix",*rotation);
+	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
+	shader->uniform1f("scalar",3.4f);
+	shader->uniform4fv("lightPosition",light_position);
+	shader->uniform4fv("lightAmbient",*light_ambient);
+	shader->uniform4fv("lightDiffuse",*light_diffuse);
+	shader->uniform4fv("lightSpecular",*light_specular);
+	shader->uniform1i("colorTex",0);
+	shader->uniform1i("depthTex",1);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,textures[0]);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,textures[1]);
 
-static void display(void)
-{
-    const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    const double a = t*0.5;
-    
-    //rotate around y axis
-     GLfloat modelMatrix[] = {
-    	cos(a),0.0f,sin(a),0.0f,
-    	0.0f,1.0f,0.0f,0.0f,
-    	-sin(a),0.0f,cos(a),0.0f,
-    	0.0f,0.0f,0.0f,1.0f};
-    	
-	//rotate around x axis
-    /*GLfloat modelMatrix[] = {
-    	1.0f,0.0f,0.0f,0.0f,
-    	0.0f,cos(a),-sin(a),0.0f,
-    	0.0f,sin(a),cos(a),0.0f,
-    	0.0f,0.0f,0.0f,1.0f};*/
-    /*GLfloat modelMatrix[] = {
-    	1.0f,0.0f,0.0f,0.0f,
-    	0.0f,1.0f,0.0f,0.0f,
-    	0.0f,0.0f,1.0f,0.0f,
-    	0.0f,0.0f,0.0f,1.0f};*/
-
-    GLint modelLoc = glGetUniformLocation(shader->id(),"modelMatrix");
-    GLint viewLoc = glGetUniformLocation(shader->id(),"viewMatrix");
-    GLint scalarLoc = glGetUniformLocation(shader->id(),"scalar");
-    GLint lightLoc = glGetUniformLocation(shader->id(),"lightPosition");
-    GLint lightAmb = glGetUniformLocation(shader->id(),"lightAmbient");
-    GLint lightDiff = glGetUniformLocation(shader->id(),"lightDiffuse");
-    GLint lightSpec = glGetUniformLocation(shader->id(),"lightSpecular");
-    GLint colorTex = glGetUniformLocation(shader->id(),"colorTex");
-    shader->bind();
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
-    glUniform1f(scalarLoc,5.0f);
-    glUniform4fv(lightLoc,1,light_position);
-    glUniform4fv(lightAmb,1,light_ambient);
-    glUniform4fv(lightDiff,1,light_diffuse);
-    glUniform4fv(lightSpec,1,light_specular);
-    glUniform1i(colorTex,0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,textures[0]);
-
-    
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    
-    
-    
-    
-    
-    glBindVertexArray(vertexArrays[0]);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
-    
-    glBindVertexArray(0);
-    
-    shader->unbind();
-    
-    glutSwapBuffers();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	
+	glBindVertexArray(vertexArrays[0]);
+	glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+	
+	glBindVertexArray(0);
+	
+	shader->unbind();
+	
+	glutSwapBuffers();
 }
 
 
-static void key(unsigned char key, int x, int y)
-{
-    switch (key)
-    {
-        case 27 :
-        case 'q':
-            exit(0);
-            break;
-	case 'c':
-		culling = !culling;
-		if(culling)
-			glEnable(GL_CULL_FACE);
-		else
-			glDisable(GL_CULL_FACE);
-		break;
-    }
+static void key(unsigned char key, int x, int y) {
+	switch (key) {
+		case 27 :
+		case 'q':
+			exit(0);
+			break;
+		case 'c':
+			culling = !culling;
+			if(culling)
+				glEnable(GL_CULL_FACE);
+			else
+				glDisable(GL_CULL_FACE);
+			break;
+	}
 
-    glutPostRedisplay();
+	glutPostRedisplay();
 }
 double last = 0.0;
-static void idle(void)
-{
-    const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    if((t - last) > (1.0/60.0))
-    {
-    	last = t;
-	glutPostRedisplay();
-    }
+static void idle(void) {
+	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+	if((t - last) > (1.0/60.0)) {
+		last = t;
+		glutPostRedisplay();
+	}
 }
 
-int main(int argc, char *argv[])
-{
-    
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
-    cout << "GLUT version " << glutGet(GLUT_VERSION) << endl;
-    
-    glutInitContextVersion(3, 2);
-    //glutInitContextFlags (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-    checkError();
-    glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
-    checkError();
-    glutInitWindowPosition(10,10);
-    checkError();
-    glutInitWindowSize(640,480);
-    checkError();
-    
-    glutCreateWindow("Open Space Sim");
-    
-    checkError();
-    cout << "GLUT setup complete\n";
-    
-    glewExperimental=GL_TRUE;
+int main(int argc, char *argv[]) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	cout << "GLUT version " << glutGet(GLUT_VERSION) << endl;
+	
+	glutInitContextVersion(3, 2);
+	//glutInitContextFlags (GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+	checkError();
+	glutInitContextFlags(GLUT_CORE_PROFILE | GLUT_DEBUG);
+	checkError();
+	glutInitWindowPosition(10,10);
+	checkError();
+	glutInitWindowSize(640,480);
+	checkError();
+	
+	glutCreateWindow("Open Space Sim");
+	
+	checkError();
+	cout << "GLUT setup complete\n";
+	
+	glewExperimental=GL_TRUE;
 	GLenum err=glewInit();
-	if(err!=GLEW_OK)
-	{
+	if(err!=GLEW_OK) {
 		//Problem: glewInit failed, something is seriously wrong.
 		cout<<"glewInit failed, aborting."<<endl;
 		exit(1);
 	}
 	
 	checkError();
-    cout << "GLEW setup complete\n";
-    
-    cout<<"OpenGL version = "<<glGetString(GL_VERSION)<<endl;
-    
-    int glVersion[2] = {0, 0};
-    glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
-    glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
-    std::cout << "Using OpenGL: " << glVersion[0] << "." << glVersion[1] << std::endl;
-    
-    int textureUnits;
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,&textureUnits);
-    std::cout << "Maximum image texture units: " << textureUnits << endl;
+	cout << "GLEW setup complete\n";
+	
+	cout<<"OpenGL version = "<<glGetString(GL_VERSION)<<endl;
+	
+	int glVersion[2] = {0, 0};
+	glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
+	glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
+	std::cout << "Using OpenGL: " << glVersion[0] << "." << glVersion[1] << std::endl;
+	
+	int textureUnits;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,&textureUnits);
+	std::cout << "Maximum image texture units: " << textureUnits << endl;
 
-    checkError();
-    
-    BuildPerspProjMat(viewMatrix, 90.0, 4.0/3.0, 0.1, 100);
+	checkError();
+	
+	BuildPerspProjMat(viewMatrix, 90.0, 4.0/3.0, 0.1, 100);
 
-    glutReshapeFunc(resize);
-    glutDisplayFunc(display);
-    glutKeyboardFunc(key);
-    glutIdleFunc(idle);
-    
-    checkError();
-    cout << "Setup GLUT callbacks" << endl;
+	glutReshapeFunc(resize);
+	glutDisplayFunc(display);
+	glutKeyboardFunc(key);
+	glutIdleFunc(idle);
+	
+	checkError();
+	cout << "Setup GLUT callbacks" << endl;
 
-    glClearColor(0,0,0,0);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    checkError();
-    cout << "GL setup complete" << endl;
+	glClearColor(0,0,0,0);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	checkError();
+	cout << "GL setup complete" << endl;
+	
+	struct aiLogStream stream;
+	// get a handle to the predefined STDOUT log stream and attach
+	// it to the logging system. It will be active for all further
+	// calls to aiImportFile(Ex) and aiApplyPostProcessing.
+	stream = aiGetPredefinedLogStream(aiDefaultLogStream_STDOUT,NULL);
+	aiAttachLogStream(&stream);
+	
+	// ... exactly the same, but this stream will now write the
+	// log file to assimp_log.txt
+	stream = aiGetPredefinedLogStream(aiDefaultLogStream_FILE,"assimp_log.txt");
+	aiAttachLogStream(&stream);
 
-    loadModel();
-    
-    normals = new vertex[vertexCount];
-    calculateModelNormals(normals,4);
-    
-    vertex* newNormals = new vertex[vertexCount];
-    
-    for(int i=0;i<vertexCount;i++)
-    {
-    	float count = 1.0f;
-    	newNormals[i].x = normals[i].x;
-    	newNormals[i].y = normals[i].y;
-    	newNormals[i].z = normals[i].z;
-    	for(int j=0;j<vertexCount;j++)
-    	{
-    		if(vertices[i].x == vertices[j].x && vertices[i].y == vertices[j].y && vertices[i].z == vertices[j].z)
-    		{
-    			newNormals[i].x += normals[j].x;
-    			newNormals[i].y += normals[j].y;
-    			newNormals[i].z += normals[j].z;
-    			count++;
-    		}
+	if( 0 != loadasset( argc >= 2 ? argv[1] : "ship.obj")) {
+		if( argc != 1 || 0 != loadasset( "../../../test/models-nonbsd/X/ship.obj") && 0 != loadasset( "../../test/models/X/Testwuson.X")) { 
+			return -1;
+		}
+	}
+	
+	//extract model data from scene
+	
+	// scale the whole asset to fit into our view frustum 
+	float tmp = scene_max.x-scene_min.x;
+	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
+	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
+	tmp = 1.f / tmp;
+	//can scale by tmp to normalize matrix ie: glScalef(tmp, tmp, tmp);
+	
+	//can center the model ie: glTranslatef( -scene_center.x, -scene_center.y, -scene_center.z );
+	stack<const struct aiNode*> nodeStack;
+	nodeStack.push(scene->mRootNode);
+	const struct aiNode* node=scene->mRootNode;
+	vector<vertex> verts;
+	vector<vertex> norms;
+	vector<vertex> texvec;
+	vertexCount=0;
+	while(nodeStack.size() > 0)
+	{
+		for(unsigned int n=0;n<node->mNumMeshes;++n)
+		{
+			const struct aiMesh* mesh = scene->mMeshes[node->mMeshes[n]];
+			for(unsigned int t=0; t<mesh->mNumFaces;++t)
+			{
+				const struct aiFace* face = &mesh->mFaces[t];
+				for(unsigned int i = 0; i < face->mNumIndices; i++) {
+					int index = face->mIndices[i];
+					if(mesh->mNormals != NULL)
+						norms.push_back(mesh->mNormals[index]);
+					if(mesh->HasTextureCoords(0))
+						texvec.push_back(mesh->mTextureCoords[0][index]);
+					verts.push_back(mesh->mVertices[index]);
+					vertexCount++;
+				}
+			}
+		}
+		for (unsigned int n = 0; n < node->mNumChildren; ++n) {
+			nodeStack.push(node->mChildren[n]);
+		}
+		node = nodeStack.top();
+		nodeStack.pop();
+	}
+	
+	vertices = new vertex[vertexCount];
+	normals = new vertex[vertexCount];
+	texCoords = new vertex[vertexCount];
+	for(int i=0;i<vertexCount;i++)
+	{
+		vertices[i]=verts[i];
+		normals[i]=norms[i];
+		texCoords[i]=texvec[i];
+	}
+	//calculateModelNormals(normals,4);
+	
+	//vertex* newNormals = new vertex[vertexCount];
+	
+	/*for(int i=0;i<vertexCount;i++) {
+		float count = 1.0f;
+		newNormals[i].x = normals[i].x;
+		newNormals[i].y = normals[i].y;
+		newNormals[i].z = normals[i].z;
+		for(int j=0;j<vertexCount;j++) {
+			if(vertices[i].x == vertices[j].x && vertices[i].y == vertices[j].y && vertices[i].z == vertices[j].z) {
+				newNormals[i].x += normals[j].x;
+				newNormals[i].y += normals[j].y;
+				newNormals[i].z += normals[j].z;
+				count++;
+			}
 	}
 	newNormals[i].x /= count;
 	newNormals[i].y /= count;
 	newNormals[i].z /= count;
-    }
-    
-    
-    texCoords = new GLfloat[vertexCount*2];
-    for(int i=0;i<vertexCount*2;i+=2)
-    {
-    	switch(i%8)
-    	{
-    		case 0:
-    			texCoords[i] = 1.0f;
-    			texCoords[i+1] = 1.0f;
-    			break;
-		case 2:
-    			texCoords[i] = 0.0f;
-    			texCoords[i+1] = 1.0f;
-    			break;
-		case 4:
-    			texCoords[i] = 1.0f;
-    			texCoords[i+1] = 0.0f;
-    			break;
-		case 6:
-			texCoords[i] = 0.0f;
-    			texCoords[i+1] = 0.0f;
-    			break;
-	}
-    }
-    checkError();
-    glGenVertexArrays(1, vertexArrays);
-    checkError();
-    glBindVertexArray(vertexArrays[0]);
-    checkError();
-    glGenBuffers(3, vertexBuffers);
-    checkError();
-    glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[1]);
-    checkError();
-    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(GLfloat)*2, texCoords, GL_STATIC_DRAW);
-    checkError();
-    glVertexAttribPointer((GLuint)1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    checkError();
-    glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[2]);
-    glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), newNormals, GL_STATIC_DRAW);
-    checkError();
-    glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    checkError();
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-    glBindVertexArray(0);
-    
-    checkError();
-    
-    shader = new Shader("shader.vert","shader.frag");
-    glBindAttribLocation(shader->id(), vertexBuffers[0], "in_Position"); // Bind a constant attribute location for positions of vertices
+	}*/
+	
+	
+	/*texCoords = new GLfloat[vertexCount*2];
+	for(int i=0;i<vertexCount*2;i+=2) {
+		switch(i%8) {
+			case 0:
+				texCoords[i] = 1.0f;
+				texCoords[i+1] = 1.0f;
+				break;
+			case 2:
+				texCoords[i] = 0.0f;
+				texCoords[i+1] = 1.0f;
+				break;
+			case 4:
+				texCoords[i] = 1.0f;
+				texCoords[i+1] = 0.0f;
+				break;
+			case 6:
+				texCoords[i] = 0.0f;
+				texCoords[i+1] = 0.0f;
+				break;
+		}
+	}*/
+	checkError();
+	glGenVertexArrays(1, vertexArrays);
+	checkError();
+	glBindVertexArray(vertexArrays[0]);
+	checkError();
+	glGenBuffers(3, vertexBuffers);
+	checkError();
+	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[1]);
+	checkError();
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), texCoords, GL_STATIC_DRAW);
+	checkError();
+	glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	checkError();
+	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[2]);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), normals, GL_STATIC_DRAW);
+	checkError();
+	glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	checkError();
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glBindVertexArray(0);
+
+	checkError();
+
+	shader = new Shader("shader.vert","shader.frag");
+	glBindAttribLocation(shader->id(), vertexBuffers[0], "in_Position"); // Bind a constant attribute location for positions of vertices
 	glBindAttribLocation(shader->id(), vertexBuffers[1], "in_TexCoords"); // Bind another constant attribute location, this time for color
 	glBindAttribLocation(shader->id(), vertexBuffers[2], "in_Normal");
-    
-    checkError();
-    cout << "allocating texture" <<endl;
-    glGenTextures(1,textures);
-    checkError();
-    cout << "loading image from file" << endl;
-    BitMapFile* image = getBMPData("brick.bmp");
-    cout << "binding texture" << endl;
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    checkError();
-    cout << "setting texture parameters" << endl;
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-  checkError();
-  cout << "loading texture data" << endl;
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
-  checkError();
-  cout << "generating mipmaps" << endl;
-  glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
-//  delete image; //free our copy of the image
-  
-  checkError();
 
-    glutMainLoop();
+	checkError();
+	cout << "allocating texture" <<endl;
+	glGenTextures(2,textures);
+	checkError();
+	cout << "loading image from file" << endl;
+	BitMapFile* image = getBMPData("shiptexture.bmp");
+	BitMapFile* depthmap = getBMPData("shipdepth.bmp");
+	cout << "binding texture" << endl;
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	//  delete image; //free our copy of the image
+	
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	
+	checkError();
 
-    return EXIT_SUCCESS;
+	glutMainLoop();
+	
+	// cleanup - calling 'aiReleaseImport' is important, as the library 
+	// keeps internal resources until the scene is freed again. Not 
+	// doing so can cause severe resource leaking.
+	aiReleaseImport(scene);
+	
+	// We added a log stream to the library, it's our job to disable it
+	// again. This will definitely release the last resources allocated
+	// by Assimp.
+	aiDetachAllLogStreams();
+
+	return EXIT_SUCCESS;
 }
