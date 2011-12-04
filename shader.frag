@@ -2,6 +2,7 @@
 
 in vec3 pass_TexCoords;
 in vec3 pass_Normal;
+in vec3 pass_Tangent;
 in vec4 pass_LightPos;
 in vec4 pass_Position;
 

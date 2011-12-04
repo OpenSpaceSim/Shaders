@@ -46,10 +46,11 @@ const GLfloat *operator*(const aiColor4D &o) {
 GLuint vertexCount;
 vertex* vertices;
 vertex* normals;
+vertex* tangents;
 vertex* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
-GLuint vertexBuffers[3];
+GLuint vertexBuffers[4];
 GLuint textures[2];
 
 aiMatrix4x4 modelMatrix;
@@ -92,8 +93,8 @@ static void display(void) {
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	aiMatrix4x4::RotationX(a,rotation);
-	aiMatrix4x4::RotationZ(-3.1415926535/2,tmp);
+	aiMatrix4x4::RotationY(a,rotation);
+	//aiMatrix4x4::RotationZ(-3.1415926535/2,tmp);
 	rotation *=tmp;
 	rotation *= modelMatrix;
 	
@@ -246,6 +247,7 @@ int main(int argc, char *argv[]) {
 	const struct aiNode* node=scene->mRootNode;
 	vector<vertex> verts;
 	vector<vertex> norms;
+	vector<vertex> tans;
 	vector<vertex> texvec;
 	vertexCount=0;
 	while(nodeStack.size() > 0)
@@ -262,6 +264,8 @@ int main(int argc, char *argv[]) {
 						norms.push_back(mesh->mNormals[index]);
 					if(mesh->HasTextureCoords(0))
 						texvec.push_back(mesh->mTextureCoords[0][index]);
+					if(mesh->HasTangentsAndBitangents())
+						tans.push_back(mesh->mTangents[index]);
 					verts.push_back(mesh->mVertices[index]);
 					vertexCount++;
 				}
@@ -276,11 +280,13 @@ int main(int argc, char *argv[]) {
 	
 	vertices = new vertex[vertexCount];
 	normals = new vertex[vertexCount];
+	tangents = new vertex[vertexCount];
 	texCoords = new vertex[vertexCount];
 	for(int i=0;i<vertexCount;i++)
 	{
 		vertices[i]=verts[i];
 		normals[i]=norms[i];
+		tangents[i]=tans[i];
 		texCoords[i]=texvec[i];
 	}
 	//calculateModelNormals(normals,4);
@@ -332,7 +338,7 @@ int main(int argc, char *argv[]) {
 	checkError();
 	glBindVertexArray(vertexArrays[0]);
 	checkError();
-	glGenBuffers(3, vertexBuffers);
+	glGenBuffers(4, vertexBuffers);
 	checkError();
 	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[0]);
 	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), vertices, GL_STATIC_DRAW);
@@ -348,9 +354,15 @@ int main(int argc, char *argv[]) {
 	checkError();
 	glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	checkError();
+	glBindBuffer(GL_ARRAY_BUFFER,vertexBuffers[3]);
+	glBufferData(GL_ARRAY_BUFFER, vertexCount*sizeof(vertex), tangents, GL_STATIC_DRAW);
+	checkError();
+	glVertexAttribPointer((GLuint)3, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	checkError();
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
 	glBindVertexArray(0);
 
 	checkError();
@@ -359,6 +371,7 @@ int main(int argc, char *argv[]) {
 	glBindAttribLocation(shader->id(), vertexBuffers[0], "in_Position"); // Bind a constant attribute location for positions of vertices
 	glBindAttribLocation(shader->id(), vertexBuffers[1], "in_TexCoords"); // Bind another constant attribute location, this time for color
 	glBindAttribLocation(shader->id(), vertexBuffers[2], "in_Normal");
+	glBindAttribLocation(shader->id(), vertexBuffers[3], "in_Tangent");
 
 	checkError();
 	cout << "allocating texture" <<endl;
