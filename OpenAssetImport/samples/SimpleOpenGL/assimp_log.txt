@@ -1,0 +1,11 @@
+Info,  T0: Load ../../../ship.obj
+Info,  T0: Found a matching importer for this file format
+Info,  T0: Import root directory is '../../../'
+Error, T0: OBJ: Unable to locate material file ship.mtl
+Info,  T0: Entering post processing pipeline
+Info,  T0: TriangulateProcess finished. All polygons have been triangulated.
+Info,  T0: Points: 0, Lines: 0, Triangles: 2, Polygons: 0 (Meshes, X = removed)
+Error, T0: Unable to compute tangents: UV0 and normals must be there 
+Info,  T0: JoinVerticesProcess finished | Verts in: 425988 out: 386419 | ~9.3%
+Info,  T0: Cache relevant are 2 meshes (212994 faces). Average output ACMR is 1.838995
+Info,  T0: Leaving post processing pipeline
