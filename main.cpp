@@ -21,6 +21,8 @@
 #include "shader.h"
 #include "util.h"
 
+#include "shiptexture.xbm"
+
 using namespace std;
 
 ostream &operator<<(ostream &ostr, const aiMatrix4x4 &o) {
@@ -92,8 +94,8 @@ static void display(void) {
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	aiMatrix4x4::RotationY(a,rotation);
-	aiMatrix4x4::RotationZ(3.1415926535/2,tmp);
+	aiMatrix4x4::RotationX(a,rotation);
+	aiMatrix4x4::RotationZ(-3.1415926535/2,tmp);
 	rotation *=tmp;
 	rotation *= modelMatrix;
 	
@@ -362,7 +364,7 @@ int main(int argc, char *argv[]) {
 	glGenTextures(1,textures);
 	checkError();
 	cout << "loading image from file" << endl;
-	BitMapFile* image = getBMPData("brick.bmp");
+	BitMapFile* image = getBMPData("shiptexture.bmp");
 	cout << "binding texture" << endl;
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	checkError();
