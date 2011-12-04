@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <stack>
 
 // assimp include files. These three are usually needed.
 #include "assimp.h"
@@ -31,14 +32,14 @@ GLuint vertexArrays[2];
 GLuint vertexBuffers[3];
 GLuint textures[2];
 
+const struct aiScene* scene = NULL;
+struct aiVector3D scene_min, scene_max, scene_center;
+
 int wireframe = 0;
 int show_normals = 0;
 int lighting = 1;
 int culling = 1;
 float alpha = 1.0f;
-
-#define aisgl_min(x,y) (x<y?x:y)
-#define aisgl_max(x,y) (y>x?y:x)
 
 typedef struct aiVector3D vector;
 
@@ -214,14 +215,53 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	//load model data
+	//extract model data from scene
 	
+	// scale the whole asset to fit into our view frustum 
+	float tmp = scene_max.x-scene_min.x;
+	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
+	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
+	tmp = 1.f / tmp;
+	//can scale by tmp to normalize matrix ie: glScalef(tmp, tmp, tmp);
+	
+	//can center the model ie: glTranslatef( -scene_center.x, -scene_center.y, -scene_center.z );
+	stack<const struct aiNode*> nodeStack;
+	nodeStack.push(scene->mRootNode);
+	const struct aiNode* node=scene->mRootNode;
+	vector<vertex> verts;
+	vector<vertex> norms;
+	vertexCount=0;
+	while(nodeStack.size() > 0)
+	{
+		for(unsigned int n=0;n<node->mNumMeshes;++n)
+		{
+			const struct aiMesh* mesh = scene->mMeshes[node->mMeshes[n]];
+			for(unsigned int t=0; t<mesh->mNumFaces;++t)
+			{
+				const struct aiFace* face = &mesh->mFaces[t];
+				for(unsigned int i = 0; i < face->mNumIndices; i++) {
+					int index = face->mIndices[i];
+					if(mesh->mNormals != NULL) 
+						norms.push_back(mesh->mNormals[index]);
+					verts.push_back(mesh->mVertices[index]);
+					vertexCount++;
+				}
+			}
+		}
+		for (unsigned int n = 0; n < node->mNumChildren; ++n) {
+			nodeStack.push(node->mChildren[n]);
+		}
+		node = nodeStack.top();
+		nodeStack.pop();
+	}
+	
+	vertices = new vertex[vertexCount];
 	normals = new vertex[vertexCount];
-	calculateModelNormals(normals,4);
+	//calculateModelNormals(normals,4);
 	
 	vertex* newNormals = new vertex[vertexCount];
 	
-	for(int i=0;i<vertexCount;i++) {
+	/*for(int i=0;i<vertexCount;i++) {
 		float count = 1.0f;
 		newNormals[i].x = normals[i].x;
 		newNormals[i].y = normals[i].y;
@@ -237,7 +277,7 @@ int main(int argc, char *argv[]) {
 	newNormals[i].x /= count;
 	newNormals[i].y /= count;
 	newNormals[i].z /= count;
-	}
+	}*/
 	
 	
 	texCoords = new GLfloat[vertexCount*2];
