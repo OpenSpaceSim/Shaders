@@ -362,7 +362,7 @@ int main(int argc, char *argv[]) {
 	glGenTextures(1,textures);
 	checkError();
 	cout << "loading image from file" << endl;
-	BitMapFile* image = getBMPData("brick.bmp");
+	BitMapFile* image = getBMPData("shiptexture.bmp");
 	cout << "binding texture" << endl;
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	checkError();
