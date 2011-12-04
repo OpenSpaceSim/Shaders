@@ -16,7 +16,7 @@ VPATH = ./usr/include/
 INCLUDEFLAGS = -I../../include 
 
 # Library flags for gcc
-LIBFLAGS = -L.
+LIBFLAGS = -L../../../
 
 # Output name of executable
 OUTPUT = samplegl
