@@ -29,7 +29,7 @@ struct BitMapFile {
    unsigned char *data;
 };
 
-typedef struct aiVector3D vector;
+typedef struct aiVector3D vertex;
 
 const struct aiScene* scene = NULL;
 struct aiVector3D scene_min, scene_max, scene_center;
