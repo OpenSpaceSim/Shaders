@@ -10,9 +10,9 @@ INCLUDEFLAGS = -I./OpenAssetImport/include
 openSpaceSim : $(OFILES)
 	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
 	
-go:
+go : $(OFILES)
 	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
-	./openSpaceSim
+	./openSpaceSim ./ship.obj
 	
 .PHONY: clean
 
