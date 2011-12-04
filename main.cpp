@@ -30,6 +30,18 @@ ostream &operator<<(ostream &ostr, const aiMatrix4x4 &o) {
 	ostr << " " <<o.d1 << ", " <<o.d2 << ", " <<o.d3 << ", " <<o.d4 << "]\n";
 	return ostr;
 }
+GLfloat *operator*(aiMatrix4x4 &o) {
+	return (GLfloat*)&o;
+}
+const GLfloat *operator*(const aiMatrix4x4 &o) {
+	return (const GLfloat*)&o;
+}
+GLfloat *operator*(aiColor4D &o) {
+	return (GLfloat*)&o;
+}
+const GLfloat *operator*(const aiColor4D &o) {
+	return (const GLfloat*)&o;
+}
 
 GLuint vertexCount;
 vertex* vertices;
@@ -58,10 +70,10 @@ typedef struct aiVector3D vector;
 GLfloat viewMatrix[16];
 
 //lighting and material information
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.3f, 1.0f };
-const GLfloat light_diffuse[]  = { 0.8f, 0.6f, 0.4f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
+const aiColor4D light_ambient(0.0f, 0.0f, 0.3f, 1.0f);
+const aiColor4D light_diffuse(0.8f, 0.6f, 0.4f, 1.0f);
+const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
+const GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
 
 const GLfloat mat_ambient[]	= { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]	= { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -79,19 +91,20 @@ static void display(void) {
 	const double a = t*0.5;
 	
 	//rotate around y axis
-	aiMatrix4x4 rotation;
-	rotation = aiMatrix4x4::RotationY(a,rotation);
+	aiMatrix4x4 rotation, tmp;
+	aiMatrix4x4::RotationY(a,rotation);
+	aiMatrix4x4::RotationZ(3.1415926535/2,tmp);
+	rotation *=tmp;
 	rotation *= modelMatrix;
-	GLfloat *modelMatrix = (GLfloat*)&rotation;
 	
 	shader->bind();
-	shader->uniformMatrix4fv("modelMatrix",modelMatrix);
+	shader->uniformMatrix4fv("modelMatrix",*rotation);
 	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
-	shader->uniform1f("scalar",5.0f);
+	shader->uniform1f("scalar",3.4f);
 	shader->uniform4fv("lightPosition",light_position);
-	shader->uniform4fv("lightAmbient",light_ambient);
-	shader->uniform4fv("lightDiffuse",light_diffuse);
-	shader->uniform4fv("lightSpecular",light_specular);
+	shader->uniform4fv("lightAmbient",*light_ambient);
+	shader->uniform4fv("lightDiffuse",*light_diffuse);
+	shader->uniform4fv("lightSpecular",*light_specular);
 	shader->uniform1i("colorTex",0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,textures[0]);
