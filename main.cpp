@@ -75,14 +75,14 @@ static void display(void) {
 		0.0f,0.0f,0.0f,1.0f
 	};
 	
-	GLint modelLoc = glGetUniformLocation(shader->id(),"modelMatrix");
-	GLint viewLoc = glGetUniformLocation(shader->id(),"viewMatrix");
-	GLint scalarLoc = glGetUniformLocation(shader->id(),"scalar");
-	GLint lightLoc = glGetUniformLocation(shader->id(),"lightPosition");
-	GLint lightAmb = glGetUniformLocation(shader->id(),"lightAmbient");
-	GLint lightDiff = glGetUniformLocation(shader->id(),"lightDiffuse");
-	GLint lightSpec = glGetUniformLocation(shader->id(),"lightSpecular");
-	GLint colorTex = glGetUniformLocation(shader->id(),"colorTex");
+	GLint modelLoc  = shader->getUniformLocation("modelMatrix");
+	GLint viewLoc   = shader->getUniformLocation("viewMatrix");
+	GLint scalarLoc = shader->getUniformLocation("scalar");
+	GLint lightLoc  = shader->getUniformLocation("lightPosition");
+	GLint lightAmb  = shader->getUniformLocation("lightAmbient");
+	GLint lightDiff = shader->getUniformLocation("lightDiffuse");
+	GLint lightSpec = shader->getUniformLocation("lightSpecular");
+	GLint colorTex  = shader->getUniformLocation("colorTex");
 	shader->bind();
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix);
