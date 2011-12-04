@@ -22,5 +22,5 @@ void main(void)
      pass_Normal = (viewMatrix*modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
      pass_LightPos = (viewMatrix*lightPosition)-gl_Position;
      pass_Position = gl_Position;
-     pass_Tangent = in_Tangent;
+     pass_Tangent = (viewMatrix*modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;//in_Tangent;
 }

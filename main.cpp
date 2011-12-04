@@ -71,7 +71,7 @@ typedef struct aiVector3D vector;
 GLfloat viewMatrix[16];
 
 //lighting and material information
-const aiColor4D light_ambient(0.0f, 0.0f, 0.3f, 1.0f);
+const aiColor4D light_ambient(0.1f, 0.1f, 0.1f, 1.0f);
 const aiColor4D light_diffuse(0.8f, 0.6f, 0.4f, 1.0f);
 const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
 const GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };

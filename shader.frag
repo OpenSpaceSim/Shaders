@@ -18,23 +18,21 @@ void main(void)
 {
       //calculate basic texture color
       vec4 baseColor = texture(colorTex,pass_TexCoords.xy);
-      vec4 depth = texture(depthTex,pass_TexCoords.xy);
+      float depth = texture(depthTex,pass_TexCoords.xy).x;
       
       //////////////////////////////////////
       //parallax mapping, doesn't work yet//
       //////////////////////////////////////
-      //calculate normal map from color map
-      float avg = (1.0-(baseColor.r + baseColor.g + baseColor.b)/4.0)/50.0;
-      vec3 normvec = vec3(avg,avg,avg);
-      vec3 eyevec = normalize(1.0 - pass_Position.xyz);
-      vec3 bipara = cross(normvec,eyevec);
+      vec3 eyevec = normalize(1.0-pass_Position.xyz);
+      vec3 bipara = cross(pass_Normal,eyevec);
       vec3 paravec = normalize(cross(pass_Normal,bipara));
-      float parallaxLength = avg/tan(acos(dot(eyevec,paravec)));
-      vec2 parallaxOffset = vec2(parallaxLength/sqrt(2.0),parallaxLength/sqrt(2.0));
-      vec4 paraColor = texture(colorTex,pass_TexCoords.xy-parallaxOffset);
+      float parallaxLength = ((sqrt(1-pass_Normal.z*pass_Normal.z))/tan(acos(dot(eyevec,paravec))))/100;
+      vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,normalize(pass_Tangent)),dot(-paravec,normalize(cross(normalize(pass_Tangent),pass_Normal))));
+      vec4 paraColor = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
+      //FragColor = vec4(parallaxOffset.x,parallaxOffset.y,parallaxLength,0);
+      //FragColor = vec4(pass_Tangent,0);
       
-      
-      float angle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_Normal),0.0);
+	float angle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_Normal),0.0);
       vec4 intensity = lightAmbient + angle*lightDiffuse + pow(angle,8)*lightSpecular;
       FragColor = baseColor*intensity*(1.0/length(pass_LightPos));
 }
