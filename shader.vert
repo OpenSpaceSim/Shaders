@@ -18,7 +18,7 @@ out vec4 pass_Position;
 
 void main(void) {
 	mat4 modelviewMatrix = viewMatrix * modelMatrix;
-	gl_Position = (modelviewMatrix*vec4(in_Position[1],in_Position[2],-in_Position[0], 1.0)/scalar)+vec4(0.0,-0.4,1.0,1.0);
+	gl_Position = (modelviewMatrix*vec4(in_Position[1],in_Position[2],-in_Position[0], 1.0)/scalar)+vec4(0.0,-0.25,1.0,1.0);
 	pass_TexCoords = in_TexCoords;
 	pass_ObjNormal = (modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
 	pass_TanNormal = in_Normal;

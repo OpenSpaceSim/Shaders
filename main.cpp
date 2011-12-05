@@ -425,7 +425,7 @@ int main(int argc, char *argv[]) {
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	checkError();
 	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, normalmap->data);
 	checkError();
 	cout << "generating mipmaps" << endl;
 	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
@@ -438,7 +438,7 @@ int main(int argc, char *argv[]) {
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	checkError();
 	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, specmap->data);
 	checkError();
 	cout << "generating mipmaps" << endl;
 	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
