@@ -9,15 +9,16 @@ in vec4 pass_Position;
 
 out vec4 FragColor;
 
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
 uniform vec4 lightAmbient;
 uniform vec4 lightDiffuse;
 uniform sampler2D colorTex;
 uniform sampler2D depthTex;
 uniform sampler2D normTex;
 uniform sampler2D specTex;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
 
+const float PI = 3.14159265358979323;
 void main(void) {
 	// calculate basic texture color
 	vec4 colorTexel = texture(colorTex,pass_TexCoords.xy);
@@ -35,11 +36,17 @@ void main(void) {
 	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
 	
 	// diffuse lighting calculations
-	float diffuseAngle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_ObjNormal),0.0);
+	//vec3 normal = normalize(pass_ObjNormal);//normalize()*.5+pass_ObjNormal*.5;
+	// normal mapping
+	vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
+	vec3 diffLightVec = normalize(pass_LightPos.xyz);
+	float diffuseAngle = max(0.0, (dot(diffLightVec,norm)));
+	// back to sanity
+	//float diffuseAngle = max(dot(diffLightVec,normal),0.0);
 	float diffuseLightFalloff = (1.0/length(pass_LightPos)*length(pass_LightPos));
-	vec4 lightIntensity = diffuseAngle * lightDiffuse * diffuseLightFalloff;
+	vec4 lightIntensity = diffuseAngle * lightDiffuse * diffuseLightFalloff*2;
 	// specular lighting
-	lightIntensity += pow(diffuseAngle,8)*texture(specTex,pass_TexCoords.xy);
+	lightIntensity += 5*pow(diffuseAngle,8)*texture(specTex,pass_TexCoords.xy);
 	// ambient lighting calculations
 	lightIntensity += lightAmbient;
 	// calculate the final fragment color
