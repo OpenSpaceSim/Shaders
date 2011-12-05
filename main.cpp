@@ -105,13 +105,18 @@ static void display(void) {
 	shader->uniform4fv("lightPosition",light_position);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
-	shader->uniform4fv("lightSpecular",*light_specular);
 	shader->uniform1i("colorTex",0);
 	shader->uniform1i("depthTex",1);
+	shader->uniform1i("normTex",2);
+	shader->uniform1i("specTex",3);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,textures[0]);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D,textures[1]);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D,textures[2]);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D,textures[3]);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
@@ -375,11 +380,13 @@ int main(int argc, char *argv[]) {
 
 	checkError();
 	cout << "allocating texture" <<endl;
-	glGenTextures(2,textures);
+	glGenTextures(4,textures);
 	checkError();
 	cout << "loading image from file" << endl;
-	BitMapFile* image = getBMPData("shiptexture.bmp");
-	BitMapFile* depthmap = getBMPData("shipdepth.bmp");
+	BitMapFile* image = getBMPData("rock01.bmp");
+	BitMapFile* depthmap = getBMPData("rock01_height.bmp");
+	BitMapFile* normalmap = getBMPData("rock01_norm.bmp");
+	BitMapFile* specmap = getBMPData("rock01_spec.bmp");
 	cout << "binding texture" << endl;
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	checkError();
@@ -409,6 +416,33 @@ int main(int argc, char *argv[]) {
 	checkError();
 	cout << "generating mipmaps" << endl;
 	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	glBindTexture(GL_TEXTURE_2D, textures[3]);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	
 	
 	checkError();
 
