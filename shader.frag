@@ -25,7 +25,8 @@ void main(void) {
 	// diffuse lighting calculations
 	//vec3 normal = normalize(pass_ObjNormal);//normalize()*.5+pass_ObjNormal*.5;
 	// normal mapping
-	vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
+	//vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
+	vec3 norm = (viewMatrix*vec4(pass_ObjNormal,1.0)).xyz;
 	vec3 diffLightVec = normalize(pass_LightPos.xyz);
 	float diffuseAngle = max(0.0, (dot(diffLightVec,norm)));
 	// back to sanity
