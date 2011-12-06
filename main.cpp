@@ -72,9 +72,11 @@ GLfloat viewMatrix[16];
 
 //lighting and material information
 const aiColor4D light_ambient(0.1f, 0.1f, 0.1f, 1.0f);
-const aiColor4D light_diffuse(0.8f, 0.6f, 0.4f, 1.0f);
+const aiColor4D light_diffuse(1.0f, 1.0f, 1.0f, 1.0f);
 const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
+
 const GLfloat light_position[] = { 2.0f, 2.0f, 0.0f, 1.0f };
+
 
 const GLfloat mat_ambient[]	= { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]	= { 0.8f, 0.8f, 0.8f, 1.0f };
