@@ -33,14 +33,16 @@ void main(void) {
         vec3 paravec = normalize(cross(pass_TanNormal,bipara));
         float parallaxLength = -((sqrt(1-pass_TanNormal.z*pass_TanNormal.z))/tan(acos(dot(eyevec,paravec))))/50;
 	vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,normalize(pass_Tangent)),dot(-paravec,normalize(cross(normalize(pass_Tangent),pass_TanNormal))));
-	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
+	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy);//+parallaxOffset);
 	
 	// diffuse lighting calculations
 	//vec3 normal = normalize(pass_ObjNormal);//normalize()*.5+pass_ObjNormal*.5;
 	// normal mapping
-	//vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
-	vec3 norm = (viewMatrix*vec4(pass_ObjNormal,1.0)).xyz;
-	vec3 diffLightVec = normalize(pass_LightPos.xyz);
+	vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
+	norm = normalize(vec3(norm[1]+pass_TanNormal[1],norm[2]+pass_TanNormal[2],-norm[0]-pass_TanNormal[0]));
+	norm = (viewMatrix*modelMatrix*vec4(norm,1.0)).xyz;
+	//vec3 norm = (viewMatrix*vec4(pass_ObjNormal,1.0)).xyz;
+	vec3 diffLightVec = normalize((inverse(viewMatrix*modelMatrix)*pass_LightPos).xyz);
 	float diffuseAngle = max(0.0, (dot(diffLightVec,norm)));
 	// back to sanity
 	//float diffuseAngle = max(dot(diffLightVec,normal),0.0);
