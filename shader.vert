@@ -9,12 +9,13 @@ uniform mat4 viewMatrix;
 uniform float scalar;
 uniform vec4 lightPosition;
 
-out vec3 pass_TexCoords;
-out vec3 pass_TanNormal;
-out vec3 pass_ObjNormal;
-out vec4 pass_LightPos;
-out vec4 pass_Position;
-out vec3 pass_Tangent;
+out vec3 texCoords;
+out vec3 norm;
+out vec3 tan;
+out vec3 bitan;
+out vec3 light;
+out vec3 eyevec;
+out float lightDist;
 
 void main(void) {
 	mat4 modelviewMatrix = viewMatrix * modelMatrix;
