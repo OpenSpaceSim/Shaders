@@ -20,28 +20,25 @@ uniform mat4 viewMatrix;
 
 const float PI = 3.14159265358979323;
 void main(void) {
-	// calculate basic texture color
-	vec4 colorTexel = texture(colorTex,pass_TexCoords.xy);
-	
 	//////////////////////////////////////
         //parallax mapping, doesn't work yet//
         //////////////////////////////////////
 	float depth = texture(depthTex,pass_TexCoords.xy).x;
 	vec3 bitan = cross(pass_TanNormal,pass_Tangent);
-        vec3 eyevec = normalize(-(inverse(viewMatrix*modelMatrix)*pass_Position)).xyz;
+        vec3 eyevec = normalize(-pass_Position).xyz;
         vec3 bipara = normalize(cross(pass_TanNormal,eyevec));
         vec3 paravec = normalize(cross(pass_TanNormal,bipara));
-        float parallaxLength = -((sqrt(1-pass_TanNormal.z*pass_TanNormal.z))/tan(acos(dot(eyevec,paravec))))/50;
-	vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,normalize(pass_Tangent)),dot(-paravec,normalize(cross(normalize(pass_Tangent),pass_TanNormal))));
-	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy);//+parallaxOffset);
+        float parallaxLength = -((sqrt(1-pass_TanNormal.z*pass_TanNormal.z))/tan(acos(dot(eyevec,paravec))))/100;
+	vec3 norm_Tangent = normalize(pass_Tangent);
+	vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,norm_Tangent),dot(-paravec,normalize(cross(norm_Tangent,pass_TanNormal))));
+	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
 	
 	//////////////////////////////////////
         //Lighting Calculations             //
         //////////////////////////////////////
 	mat4 modelviewMatrix = viewMatrix*modelMatrix;
 	// Normal mapping
-	vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
-	norm += pass_TanNormal; // transform the tangent normal by the normal map
+	vec3 norm = (texture2D(normTex, pass_TexCoords.xy+parallaxOffset) * 2.0 - 1.0).xyz + pass_TanNormal;
 	norm = normalize(vec3(norm[1],norm[2],-norm[0]));
 	norm = (modelviewMatrix*vec4(norm,1.0)).xyz; // put in modelview space
 	// Calculate the diffuse lighting Angle

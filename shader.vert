@@ -22,7 +22,8 @@ void main(void) {
 	pass_TexCoords = in_TexCoords;
 	pass_ObjNormal = (modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
 	pass_TanNormal = in_Normal;
-	pass_Position = gl_Position;
-	pass_LightPos = lightPosition-inverse(modelviewMatrix)*gl_Position;
+	vec4 absPosition = inverse(modelviewMatrix)*gl_Position;
+	pass_Position = absPosition;
+	pass_LightPos = lightPosition-absPosition;
         pass_Tangent = in_Tangent;
 }
