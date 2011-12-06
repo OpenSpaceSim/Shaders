@@ -3,7 +3,7 @@
 in vec3 pass_TexCoords;
 in vec3 pass_TanNormal;
 in vec3 pass_ObjNormal;
-//in vec3 pass_Tangent;
+in vec3 pass_Tangent;
 in vec4 pass_LightPos;
 in vec4 pass_Position;
 
@@ -16,56 +16,42 @@ uniform sampler2D depthTex;
 uniform sampler2D normTex;
 uniform sampler2D specTex;
 uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+
 const float PI = 3.14159265358979323;
 void main(void) {
 	// calculate basic texture color
 	vec4 colorTexel = texture(colorTex,pass_TexCoords.xy);
+	
+	//////////////////////////////////////
+        //parallax mapping, doesn't work yet//
+        //////////////////////////////////////
+	float depth = texture(depthTex,pass_TexCoords.xy).x;
+	vec3 bitan = cross(pass_TanNormal,pass_Tangent);
+        vec3 eyevec = normalize(-(inverse(viewMatrix*modelMatrix)*pass_Position)).xyz;
+        vec3 bipara = normalize(cross(pass_TanNormal,eyevec));
+        vec3 paravec = normalize(cross(pass_TanNormal,bipara));
+        float parallaxLength = -((sqrt(1-pass_TanNormal.z*pass_TanNormal.z))/tan(acos(dot(eyevec,paravec))))/50;
+	vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,normalize(pass_Tangent)),dot(-paravec,normalize(cross(normalize(pass_Tangent),pass_TanNormal))));
+	vec4 paraTexel = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
+	
 	// diffuse lighting calculations
 	//vec3 normal = normalize(pass_ObjNormal);//normalize()*.5+pass_ObjNormal*.5;
 	// normal mapping
-	/*vec3 normal = normalize(texture(normTex,pass_TexCoords.xy).xyz)* 2.0 - 1.0;
-	vec3 normPos = normalize(pass_Position.xyz);
-	vec3 bivector = normalize(cross(normPos, normal)); //vector perpendicular to position and normal
-	vec3 perpposition = normalize(cross(bivector, normPos)); //vector at right angles to position in direction of normal
-	float normalangle = acos(dot(normPos, normal)); //angle between position and normal
-	//float exaggeratedangle = tan((exaggeration / bakedExaggeration) * atan(normalangle)); //calculate exaggerated angle (normals are already exaggerated by bakedExaggeration)
-	float mixer = clamp(normalangle * 2.0 / PI, 0.0, 1.0);
-	normal = normalize(mix(normPos, perpposition, mixer));*/
-	vec3 normal = normalize(pass_ObjNormal);
+	//vec3 norm = (texture2D(normTex, pass_TexCoords.xy) * 2.0 - 1.0).xyz;
+	vec3 norm = (viewMatrix*vec4(pass_ObjNormal,1.0)).xyz;
+	vec3 diffLightVec = normalize(pass_LightPos.xyz);
+	float diffuseAngle = max(0.0, (dot(diffLightVec,norm)));
 	// back to sanity
-	float diffuseAngle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),normal),0.0);
+	//float diffuseAngle = max(dot(diffLightVec,normal),0.0);
 	float diffuseLightFalloff = (1.0/length(pass_LightPos)*length(pass_LightPos));
-	vec4 lightIntensity = diffuseAngle * lightDiffuse * diffuseLightFalloff;
+	vec4 lightIntensity = diffuseAngle * lightDiffuse * diffuseLightFalloff*2;
 	// specular lighting
 	lightIntensity += 5*pow(diffuseAngle,8)*texture(specTex,pass_TexCoords.xy);
 	// ambient lighting calculations
 	lightIntensity += lightAmbient;
 	// calculate the final fragment color
-	FragColor = colorTexel*lightIntensity;
+	FragColor = paraTexel*lightIntensity;
       //float depth = texture(depthTex,pass_TexCoords.xy).x;
       
-      //////////////////////////////////////
-      //parallax mapping, doesn't work yet//
-      //////////////////////////////////////
-      //vec3 eyevec = normalize(1.0-pass_Position.xyz);
-      /*vec3 bipara = cross(normalize(pass_Normal),eyevec);
-      vec3 paravec = normalize(cross(pass_Normal,bipara));
-      float parallaxLength = ((sqrt(1-pass_Normal.z*pass_Normal.z))/tan(acos(dot(eyevec,paravec))))/1000;
-      vec2 parallaxOffset = parallaxLength*vec2(dot(-paravec,normalize(pass_Tangent)),dot(-paravec,normalize(cross(normalize(pass_Tangent),pass_Normal))));
-      vec4 paraColor = texture(colorTex,pass_TexCoords.xy+parallaxOffset);
-      //FragColor = vec4(parallaxOffset.x,parallaxOffset.y,parallaxLength,0);
-      //FragColor = vec4(pass_Tangent,0);
-      //vec4 paraColor = 200*vec4(parallaxOffset,parallaxOffset);
-	*/
-	/*float fBumpScale = 0.05f;
-	vec2 vHalfOffset = eyevec.xy * (depth) * fBumpScale;
-	depth = (depth + texture(depthTex, pass_TexCoords.xy + vHalfOffset).x) * 0.5;
-	vHalfOffset = eyevec.xy * (depth) * fBumpScale;
-	depth = (depth + texture(depthTex, pass_TexCoords.xy + vHalfOffset).x) * 0.5;
-	vHalfOffset = eyevec.xy * (depth) * fBumpScale;
-	vec4 paraColor = texture(colorTex,pass_TexCoords.xy + vHalfOffset);
-	
-	float angle = max(dot(pass_LightPos.xyz/length(pass_LightPos.xyz),pass_Normal),0.0);
-      vec4 intensity = lightAmbient + angle*lightDiffuse + pow(angle,8)*lightSpecular;
-      FragColor = paraColor;//*intensity*(1.0/length(pass_LightPos));*/
 }

@@ -12,7 +12,7 @@ openSpaceSim : $(OFILES)
 	
 go : $(OFILES)
 	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
-	./openSpaceSim ./shipsub.blend
+	./openSpaceSim ./ship.obj
 	
 .PHONY: clean
 
