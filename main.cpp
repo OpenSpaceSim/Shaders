@@ -74,7 +74,7 @@ GLfloat viewMatrix[16];
 const aiColor4D light_ambient(0.1f, 0.1f, 0.1f, 1.0f);
 const aiColor4D light_diffuse(0.8f, 0.6f, 0.4f, 1.0f);
 const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
-const GLfloat light_position[] = { 2.0f, 0.5f, 0.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 2.0f, 0.0f, 1.0f };
 
 const GLfloat mat_ambient[]	= { 0.7f, 0.7f, 0.7f, 1.0f };
 const GLfloat mat_diffuse[]	= { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -94,7 +94,7 @@ static void display(void) {
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
 	aiMatrix4x4::RotationY(a,rotation);
-	aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
+	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
 	//rotation *=tmp;
 	rotation *= modelMatrix;
 	
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
 
 	glClearColor(.4,.5,.5,0);
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	checkError();

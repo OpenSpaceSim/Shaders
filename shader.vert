@@ -9,20 +9,33 @@ uniform mat4 viewMatrix;
 uniform float scalar;
 uniform vec4 lightPosition;
 
-out vec3 pass_TexCoords;
-out vec3 pass_TanNormal;
-out vec3 pass_ObjNormal;
-out vec4 pass_LightPos;
-out vec4 pass_Position;
-out vec3 pass_Tangent;
+out vec3 texCoords;
+out vec3 norm;
+out vec3 tan;
+out vec3 bitan;
+out vec3 light;
+out vec3 eyevec;
+out float lightDist;
 
 void main(void) {
 	mat4 modelviewMatrix = viewMatrix * modelMatrix;
-	gl_Position = (modelviewMatrix*vec4(in_Position[1],in_Position[2],-in_Position[0], 1.0)/scalar)+vec4(0.0,-0.25,1.0,1.0);
-	pass_TexCoords = in_TexCoords;
-	pass_ObjNormal = (modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
-	pass_TanNormal = in_Normal;
-	pass_Position = gl_Position;
-	pass_LightPos = lightPosition-gl_Position;
-        pass_Tangent = in_Tangent;
+	gl_Position = (modelviewMatrix*vec4(in_Position, 1.0)/scalar)+vec4(0.0,-0.25,1.0,1.0);
+	
+	//pass_ObjNormal = (modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
+	
+	//pass_Position = gl_Position;
+	//pass_LightPos = lightPosition-gl_Position;
+	
+	texCoords = in_TexCoords;
+	mat4 normalMatrix = transpose(inverse(modelMatrix));
+	norm = normalize((normalMatrix*vec4(in_Normal,1)).xyz);
+        tan = normalize((normalMatrix*vec4(in_Tangent,1)).xyz);
+        bitan = cross(norm,tan);
+        mat3 tbnMatrix = mat3(tan.x, bitan.x, norm.x,
+                         tan.y, bitan.y, norm.y,
+                         tan.z, bitan.z, norm.z);
+        mat3 itbnMatrix = inverse(tbnMatrix);
+        light = normalize(tbnMatrix*(lightPosition-gl_Position).xyz);
+        eyevec = normalize(tbnMatrix * -gl_Position.xyz);
+        lightDist = length(((viewMatrix*lightPosition)-gl_Position).xyz);
 }
