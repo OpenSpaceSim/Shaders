@@ -20,12 +20,17 @@ out vec4 FragColor;
 
 void main(void)
 {
+        vec3 bipara = cross(norm,eyevec);
+        vec3 para = cross(norm,bipara);
+        float paralen = -min(sqrt(1 - eyevec.z * eyevec.z) / eyevec.z,0.02);
+        vec2 paraCoords = -para.xy * paralen * (texture(depthTex,texCoords.xy).x*4-2);
+        
 	// ambiant lighting
 	vec4 lightIntensity = lightAmbient;
         // diffuse lighting
-	vec3 surface_normal = normalize((texture2D(normTex, texCoords.xy) * 2.0 - 1.0).xyz+norm);
+	vec3 surface_normal = normalize((texture2D(normTex, texCoords.xy) * 2.0 - 1.0).xyz);
 	//surface_normal = norm;
-        float lightAngle =max(dot(light,surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
+        float lightAngle =max(dot(vec3(0.0,0.0,1.0),surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
         float diffuseLightFalloff = min((10.0/(lightDist*lightDist)),1.0);
         lightIntensity += diffuseLightFalloff * light.z * lightDiffuse;
 	// specular lighting
@@ -34,7 +39,7 @@ void main(void)
 	lightIntensity += specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
 	//lightIntensity += specularColor*specularIntensity*pow(lightAngle,specularIntensity);
         
-        vec4 colorTexel = texture(colorTex,texCoords.xy);
+        vec4 colorTexel = texture(colorTex,texCoords.xy+paraCoords);
         FragColor = colorTexel*lightIntensity;//vec4(light.y,light.y,light.y,1);//colorTexel*
 }
 /*
