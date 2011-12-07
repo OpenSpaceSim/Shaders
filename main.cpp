@@ -58,11 +58,9 @@ aiMatrix4x4 modelMatrix;
 const struct aiScene* scene = NULL;
 struct aiVector3D scene_min, scene_max, scene_center;
 
-int wireframe = 0;
-int show_normals = 0;
-int lighting = 1;
+float samples = 1000;
+float depth = 0.1;
 int culling = 1;
-float alpha = 1.0f;
 
 typedef struct aiVector3D vector;
 
@@ -94,12 +92,14 @@ double inc = 0.002;
 float trans[] = {0.0f, -0.25f, 0.8f, 1.0f};
 //float trans[] = {0.0f, 0.0, 0.0, 1.0f};
 static void display(void) {
-	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-	const double a = t*0.1;
+	const double t = 100.0*(glutGet(GLUT_ELAPSED_TIME) / 6000.0);
 	
-	off += inc;
-	if(abs(off)>0.5)
-	        inc = -inc;
+	off += inc*(t-lastT);
+	lastT = t;
+	if(off>0.5)
+	        inc = -abs(inc);
+        if(off<-0.5)
+                inc = abs(inc);
 	trans[0] = off;
 	GLfloat shiftedLight[4];
 	for(int i=0;i<4;i++)
@@ -119,6 +119,8 @@ static void display(void) {
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
 	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
 	shader->uniform1f("scalar",3.4f);
+	shader->uniform1f("samples",samples);
+	shader->uniform1f("depth",depth);
 	shader->uniform4fv("lightPosition",shiftedLight);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
@@ -162,20 +164,31 @@ static void key(unsigned char key, int x, int y) {
 			else
 				glDisable(GL_CULL_FACE);
 			break;
+		case 'a':
+		        depth += 0.01;
+		        samples += 100;
+		        break;
+	        case 'z':
+	                if(depth > 0.0)
+        	                depth -= 0.01;
+	                break;
 	}
 
 	glutPostRedisplay();
 }
 double last = 0.0;
 double minfps=999.0;
+bool slow = 0;
 static void idle(void) {
-glutPostRedisplay();
-return;
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	if((t - last) > (1.0/60.0)) {
+	        if(slow > 5)
+	                samples /= 2;
+                slow = 0;
 		last = t;
 		glutPostRedisplay();
 	}
+	slow++;
 	if(1.0/(t - last) < minfps)
 	{
 	        minfps = 1.0/(t - last);

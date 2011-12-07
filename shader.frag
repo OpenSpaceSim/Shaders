@@ -17,14 +17,13 @@ uniform sampler2D colorTex;
 uniform sampler2D depthTex;
 uniform sampler2D normTex;
 uniform sampler2D specTex;
+uniform float samples;
+uniform float depth;
 
 // The actual tecture coord after parallax mapping
 vec2 offsetCoord;
 
 // Constants for use in parallax stuff
-const float samples = 1000;
-const float shadowSamples = samples/10;
-const float depth = 0.1;
 
 vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
         /// parallax occlusion mapping
@@ -60,6 +59,7 @@ float ComputeParallaxOcclusionVisibility(vec2 texCoord, vec3 point, float pointD
         /// here we calculate the parallax offset.
         /// at each pixel we check to make sure we don't intersect with a previous
         /// position on the height map
+        float shadowSamples = samples/10;
         float texCoordDepth = texture2D(depthTex,texCoord).x * depth;
         float texCoordHorizUnit = depth*length(vec2(-eyevec.x, eyevec.y) * depth / (eyevec.z * shadowSamples))/(1.0/shadowSamples);
         float texCoordHoriz = texCoordHorizUnit*length(texCoord);
