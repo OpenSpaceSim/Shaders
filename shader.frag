@@ -1,9 +1,6 @@
 #version 330 core
 
 in vec3 texCoords;
-in vec3 norm;
-in vec3 tan;
-in vec3 bitan;
 in vec3 light;
 in vec3 eyevec;
 in vec3 halfVec;
@@ -20,8 +17,8 @@ out vec4 FragColor;
 
 void main(void)
 {
-        vec3 bipara = cross(norm,eyevec);
-        vec3 para = cross(norm,bipara);
+        vec3 bipara = cross(vec3(0,0,1),eyevec);
+        vec3 para = cross(vec3(0,0,1),bipara);
         float paralen = -min(sqrt(1 - eyevec.z * eyevec.z) / eyevec.z,0.02);
         vec2 paraCoords = -para.xy * paralen * (texture(depthTex,texCoords.xy).x*4-2);
         
