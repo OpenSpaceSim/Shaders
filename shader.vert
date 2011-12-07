@@ -15,6 +15,7 @@ out vec3 tan;
 out vec3 bitan;
 out vec3 light;
 out vec3 eyevec;
+out vec3 halfVec;
 out float lightDist;
 
 void main(void) {
@@ -38,4 +39,7 @@ void main(void) {
         light = normalize(tbnMatrix*(lightPosition-gl_Position).xyz);
         eyevec = normalize(tbnMatrix * -gl_Position.xyz);
         lightDist = length(((viewMatrix*lightPosition)-gl_Position).xyz);
+	
+	halfVec = normalize(gl_Position.xyz + light);
+	halfVec = vec3(dot(halfVec,tan),dot(halfVec,bitan),dot(halfVec,norm));
 }

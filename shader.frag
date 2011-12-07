@@ -6,6 +6,7 @@ in vec3 tan;
 in vec3 bitan;
 in vec3 light;
 in vec3 eyevec;
+in vec3 halfVec;
 in float lightDist;
 
 uniform vec4 lightAmbient;
@@ -19,10 +20,18 @@ out vec4 FragColor;
 
 void main(void)
 {
-        //tangent space lighting
-        float lightAngle =max(dot(light,norm),0.0);//max(dot(light,vec3(0,0,1)),0.0);
+	// ambiant lighting
+	vec4 lightIntensity = lightAmbient;
+        // diffuse lighting
+	vec3 surface_normal = normalize((texture2D(normTex, texCoords.xy) * 2.0 - 1.0).xyz+norm);
+        float lightAngle =max(dot(light,surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
         float diffuseLightFalloff = min((10.0/(lightDist*lightDist)),1.0);
-        vec4 lightIntensity = diffuseLightFalloff * light.z * lightDiffuse + lightAmbient;
+        lightIntensity += diffuseLightFalloff * light.z * lightDiffuse;
+	// specular lighting
+	vec4 specularColor = texture(specTex,texCoords.xy);
+	float specularIntensity = length(specularColor);
+	lightIntensity += 5*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
+	//lightIntensity += specularColor*specularIntensity*pow(lightAngle,specularIntensity);
         
         vec4 colorTexel = texture(colorTex,texCoords.xy);
         FragColor = colorTexel*lightIntensity;//vec4(light.y,light.y,light.y,1);//colorTexel*
