@@ -132,22 +132,20 @@ vec4 ComputeTex(mat4 alias, sampler2D tex) {
         return texel/4;
 }
 
-vec4 GetLightingFactor(vec3 point, float pointDist) {
+vec4 GetLightingFactor(vec3 point, float pointDist, vec4 pointColor) {
 	// SHADOW MAPPING
 	// Compute light's shadow factor
-	float shadow = ComputeParallaxOcclusionVisibility(offsetCoord, light, lightDist);
+	float shadow = ComputeParallaxOcclusionVisibility(offsetCoord, point, pointDist);
 	// NORMAL MAPPING
-	vec3 surface_normal = normalize((texture2D(normTex, offsetCoord.xy) * 2.0 - 1.0).xyz);
+	vec3 surface_normal = normalize((texture2D(normTex, offsetCoord) * 2.0 - 1.0).xyz);
 	// DIFFUSE LIGHTING
-	// Compute the angle to the light
-	float lightAngle =max(dot(vec3(0.0,0.0,1.0),surface_normal),0.0000001);
 	// Quadradic light dispersal function
-	float diffuseLightFalloff = min((10.0/(lightDist*lightDist)),1.0);
+	float diffuseLightFalloff = min((10.0/(pointDist*pointDist)),1.0);
 	// SPECULAR LIGHTING W SPECULAR MAPPING
-	vec4 specularColor = texture(specTex,offsetCoord.xy);
+	vec4 specularColor = texture(specTex,offsetCoord);
 	float specularIntensity = length(specularColor);
 	// PUTTING THE LIGHT TOGETHER
-	return shadow*((diffuseLightFalloff * light.z * lightDiffuse) + specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0));
+	return shadow*((diffuseLightFalloff * point.z * pointColor) + specularIntensity*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0));
 }
 
 void main(void) {
@@ -158,7 +156,7 @@ void main(void) {
 	// ambiant lighting
 	vec4 lightIntensity = lightAmbient;
         // light sources
-	lightIntensity += GetLightingFactor(light, lightDist);
+	lightIntensity += GetLightingFactor(light, lightDist, lightDiffuse);
         
         //get color from color map
         vec4 colorTexel = texture2D(colorTex,offsetCoord);
