@@ -88,14 +88,21 @@ static void resize(int width, int height) {
 	const float ar = (float) width / (float) height;
 	BuildPerspProjMat(viewMatrix, 90.0, ar, 0.1, 100);
 }
-
+double off = -0.5;
+double lastT = 0.0;
+double inc = 0.001;
+float trans[] = {0.0f, -0.25, 1.0, 1.0f};
 static void display(void) {
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	const double a = t*0.5;
 	
+	off += inc;
+	if(abs(off)>0.5)
+	        inc = -inc;
+	trans[0] = off;
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	aiMatrix4x4::RotationY(a,rotation);
+	//aiMatrix4x4::RotationY(a,rotation);
 	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
 	//rotation *=tmp;
 	rotation *= modelMatrix;
@@ -107,6 +114,7 @@ static void display(void) {
 	shader->uniform4fv("lightPosition",light_position);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
+	shader->uniform4fv("translation",trans);
 	shader->uniform1i("colorTex",0);
 	shader->uniform1i("depthTex",1);
 	shader->uniform1i("normTex",2);
