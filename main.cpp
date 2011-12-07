@@ -75,7 +75,7 @@ const aiColor4D light_ambient(0.1f, 0.1f, 0.1f, 1.0f);
 const aiColor4D light_diffuse(1.0f, 1.0f, 1.0f, 1.0f);
 const aiColor4D light_specular(1.0f, 1.0f, 1.0f, 1.0f);
 
-const GLfloat light_position[] = { 2.0f, 1.0f, 0.0f, 1.0f };
+const GLfloat light_position[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 
 const GLfloat mat_ambient[]	= { 0.7f, 0.7f, 0.7f, 1.0f };
@@ -91,10 +91,11 @@ static void resize(int width, int height) {
 double off = -0.5;
 double lastT = 0.0;
 double inc = 0.002;
-float trans[] = {0.0f, -1.0, 1.0, 1.0f};
+float trans[] = {0.0f, -0.25, 1.0, 1.0f};
+//float trans[] = {0.0f, 0.0, 0.0, 1.0f};
 static void display(void) {
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-	const double a = t*0.5;
+	const double a = t*0.1;
 	
 	off += inc;
 	if(abs(off)>0.5)
@@ -103,9 +104,10 @@ static void display(void) {
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
 	//aiMatrix4x4::RotationY(a,rotation);
+	//aiMatrix4x4::Translation(aiVector3D(0.0f,0.0f,0.0f),rotation);
 	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
 	//rotation *=tmp;
-	rotation = modelMatrix;
+	rotation *= modelMatrix;
 	
 	shader->bind();
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
@@ -221,7 +223,7 @@ int main(int argc, char *argv[]) {
 	checkError();
 	cout << "Setup GLUT callbacks" << endl;
 
-	glClearColor(.4,.5,.5,0);
+	glClearColor(0,0,0,0);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
