@@ -1,9 +1,6 @@
 #version 330 core
 
 in vec3 texCoords;
-in vec3 norm;
-in vec3 tan;
-in vec3 bitan;
 in vec3 light;
 in vec3 eyevec;
 in vec3 halfVec;
@@ -17,47 +14,52 @@ uniform sampler2D normTex;
 uniform sampler2D specTex;
 
 out vec4 FragColor;
-
-void main(void) {
-	float scale = .1;
-	float maxOffset = .05;
-	// parallax mapping
-	float bias = scale * 0.5;
-	vec3 heightVector = texture2D( depthTex, texCoords.xy ).xyz;
-	float height = scale * length( heightVector ) - bias;
-	// steep
-	height = 4.0;
-	float numSteps = 4; numSteps = mix(numSteps*2, numSteps, eyevec.z);
-	vec2 offsetCoord = texCoords.xy;
-	float step = eyevec.z * scale * (25.6 * numSteps) / (length(eyevec.xy) * 400);//1.0/numSteps;//eyevec.z * scale * (25.6 * numSteps) / (length(eyevec.xy) * 400);//
-	vec2 delta = 1.0 / (25.6 * numSteps) * vec2(-eyevec.x, eyevec.y);//vec2(-eyevec.x, eyevec.y) * scale / (eyevec.z * numSteps);//
-	float jackOff = texture2D(depthTex, offsetCoord).x;
-	while (jackOff < height) {
-		height -= step;
-		offsetCoord += delta;
-		jackOff = texture2D(depthTex, offsetCoord).x;
-	}
-	height = heightVector.x;
-	vec2 nextTex = offsetCoord;//((offsetCoord-texCoords.xy)/4)+texCoords.xy;
-	//vec2 nextTex = height * eyevec.xy +  texCoords.xy;
-	//nextTex = vec2(clamp(nextTex.x,texCoords.x-maxOffset,texCoords.x+maxOffset),clamp(nextTex.y,texCoords.y-maxOffset,texCoords.y+maxOffset));
-	
-	vec2 pTexCoord = nextTex;
+const float samples = 2000;
+const float bias = 0.3;
+const float depth = 0.3;
+void main(void)
+{
+        //parallax mapping//
+        //vec3 bipara = cross(vec3(0,0,1),eyevec);
+        //vec2 para = cross(vec3(0,0,1),bipara).xy;
+        //vec2 para = normalize(eyevec.xy);
+        //calculate parallax length
+        //float paralen = -sqrt(1 - eyevec.z * eyevec.z) / eyevec.z;
+        //calculate bias used for adjusting effect
+        //float parabias = bias + (1-bias)*((2*eyevec.z)-1);
+        //vec2 paraCoords = -para * paralen * parabias; //* (texture(depthTex,texCoords.xy).x*10-5);
+        
+        //parallax occlusion mapping//
+        float inc = 1.0/samples;
+        vec2 delta = vec2(-eyevec.x, eyevec.y) * depth / (eyevec.z * samples);
+        float dist = 1.0;
+        float height = 0.0;
+        vec2 offsetCoord = texCoords.xy;
+        float start = texture(depthTex,texCoords.xy).x;
+        while(dist > height)
+        {
+                height = (texture(depthTex,offsetCoord).x);
+                offsetCoord += delta;
+                dist -= inc;
+        }
+        //paraCoords *= ;
+        //paraCoords *= mix((texture(depthTex,texCoords.xy - (paraCoords*dist)).x),(texture(depthTex,texCoords.xy - (paraCoords*dist-inc)).x),height-((1.0-dist)*eyevec.z)+start);
+        
 	// ambiant lighting
 	vec4 lightIntensity = lightAmbient;
         // diffuse lighting
-	vec3 surface_normal = normalize((texture2D(normTex, pTexCoord) * 2.0 - 1.0).xyz+norm);
+	vec3 surface_normal = normalize((texture2D(normTex, texCoords.xy) * 2.0 - 1.0).xyz);
 	//surface_normal = norm;
-        float lightAngle =max(dot(light,surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
+        float lightAngle =max(dot(vec3(0.0,0.0,1.0),surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
         float diffuseLightFalloff = min((10.0/(lightDist*lightDist)),1.0);
         lightIntensity += diffuseLightFalloff * light.z * lightDiffuse;
 	// specular lighting
-	vec4 specularColor = texture(specTex,pTexCoord);
+	vec4 specularColor = texture(specTex,texCoords.xy);
 	float specularIntensity = length(specularColor);
 	lightIntensity += specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
 	//lightIntensity += specularColor*specularIntensity*pow(lightAngle,specularIntensity);
         
-        vec4 colorTexel = texture(colorTex,pTexCoord);
+        vec4 colorTexel = texture(colorTex,offsetCoord.xy);
         FragColor = colorTexel*lightIntensity;//vec4(light.y,light.y,light.y,1);//colorTexel*
 }
 /*

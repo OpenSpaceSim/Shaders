@@ -91,7 +91,7 @@ static void resize(int width, int height) {
 double off = -0.5;
 double lastT = 0.0;
 double inc = 0.002;
-float trans[] = {0.0f, -0.25, 1.0, 1.0f};
+float trans[] = {0.0f, -1.0, 1.0, 1.0f};
 static void display(void) {
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	const double a = t*0.5;
