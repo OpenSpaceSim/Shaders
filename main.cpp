@@ -161,7 +161,7 @@ static void display(void) {
 	glutSwapBuffers();
 }
 
-
+bool fullscreen = false;
 static void key(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27 :
@@ -198,6 +198,20 @@ static void key(unsigned char key, int x, int y) {
                         if(inc > 0.001)
                                 inc -= 0.001*inc/abs(inc);
                         break;
+                case 'm':
+                        fullscreen = !fullscreen;
+                          if (fullscreen)
+                          {
+                                glutFullScreen();                /* Go to full screen */
+                                glutSetCursor(GLUT_CURSOR_NONE);
+                          }
+                          else
+                          {
+                        glutReshapeWindow(800, 600);        /* Restore us */
+                            glutPositionWindow(0,0);
+                            glutSetCursor(GLUT_CURSOR_INHERIT);
+                          }
+                          break;
 	}
 
 	glutPostRedisplay();
