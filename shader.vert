@@ -15,12 +15,14 @@ out vec3 tan;
 out vec3 bitan;
 out vec3 light;
 out vec3 eyevec;
+out vec3 halfVec;
+out float tocam;
 out float lightDist;
 
 void main(void) {
 	mat4 modelviewMatrix = viewMatrix * modelMatrix;
 	gl_Position = (modelviewMatrix*vec4(in_Position, 1.0)/scalar)+vec4(0.0,-0.25,1.0,1.0);
-	
+	tocam = length(gl_Position.xyz);
 	//pass_ObjNormal = (modelMatrix*vec4(in_Normal[1],in_Normal[2],-in_Normal[0],1.0)).xyz;
 	
 	//pass_Position = gl_Position;
@@ -38,4 +40,7 @@ void main(void) {
         light = normalize(tbnMatrix*(lightPosition-gl_Position).xyz);
         eyevec = normalize(tbnMatrix * -gl_Position.xyz);
         lightDist = length(((viewMatrix*lightPosition)-gl_Position).xyz);
+	
+	halfVec = normalize(gl_Position.xyz + light);
+	halfVec = vec3(dot(halfVec,tan),dot(halfVec,bitan),dot(halfVec,norm));
 }

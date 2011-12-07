@@ -6,7 +6,9 @@ in vec3 tan;
 in vec3 bitan;
 in vec3 light;
 in vec3 eyevec;
+in vec3 halfVec;
 in float lightDist;
+in float tocam;
 
 uniform vec4 lightAmbient;
 uniform vec4 lightDiffuse;
@@ -16,15 +18,47 @@ uniform sampler2D normTex;
 uniform sampler2D specTex;
 
 out vec4 FragColor;
-
-void main(void)
-{
-        //tangent space lighting
-        float lightAngle =max(dot(light,norm),0.0);//max(dot(light,vec3(0,0,1)),0.0);
+const float bumpScale = 0.03;
+void main(void) {
+	// parallax mapping
+	vec2 texLocation = texCoords.xy;
+	//if (tocam < 1) {
+	vec2 texDelta = vec2(0.0,0.0);
+	float height = 1.0;
+	// Number of height divisions
+	float depth = texture2D(depthTex, texLocation).x;
+	// Increase steps at oblique angles
+	// Note: tsE.z = N dot V
+	float numSteps = mix(10, 5, eyevec.z);
+	float step=3/numSteps; // movement constant in z
+	vec2 delta=vec2(-eyevec.x, eyevec) * bumpScale / (eyevec.z * numSteps);
+	while (depth < height) {
+		height -= step;
+		texDelta += delta;
+		depth = texture2D(depthTex, texLocation+texDelta).x;
+	}
+	height = depth;
+	//texDelta = vec2(min(.000000001,texDelta.x),min(.000000001,texDelta.y));
+	if (tocam > .5) {
+		texDelta = texDelta / ((tocam-.5)*10+1);
+	}
+	texLocation += texDelta;
+	//}
+	
+	// ambiant lighting
+	vec4 lightIntensity = 5*lightAmbient;
+        // diffuse lighting
+	vec3 surface_normal = normalize((texture2D(normTex, texLocation) * 2.0 - 1.0).xyz+norm);
+        float lightAngle =max(dot(light,surface_normal),0.0000001);//max(dot(light,vec3(0,0,1)),0.0);
         float diffuseLightFalloff = min((10.0/(lightDist*lightDist)),1.0);
-        vec4 lightIntensity = diffuseLightFalloff * light.z * lightDiffuse + lightAmbient;
+        lightIntensity += diffuseLightFalloff * light.z * lightDiffuse;
+	// specular lighting
+	vec4 specularColor = texture(specTex,texLocation);
+	//float specularIntensity = length(specularColor);
+	lightIntensity += 5*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
+	//lightIntensity += specularColor*specularIntensity*pow(lightAngle,specularIntensity);
         
-        vec4 colorTexel = texture(colorTex,texCoords.xy);
+        vec4 colorTexel = texture(colorTex,texLocation);
         FragColor = colorTexel*lightIntensity;//vec4(light.y,light.y,light.y,1);//colorTexel*
 }
 /*
