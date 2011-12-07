@@ -91,7 +91,7 @@ static void resize(int width, int height) {
 double off = -0.5;
 double lastT = 0.0;
 double inc = 0.002;
-float trans[] = {0.0f, -0.25, 1.0, 1.0f};
+float trans[] = {0.0f, -0.25f, 0.8f, 1.0f};
 //float trans[] = {0.0f, 0.0, 0.0, 1.0f};
 static void display(void) {
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
@@ -101,6 +101,12 @@ static void display(void) {
 	if(abs(off)>0.5)
 	        inc = -inc;
 	trans[0] = off;
+	GLfloat shiftedLight[4];
+	for(int i=0;i<4;i++)
+	{
+	        shiftedLight[i] = light_position[i];
+        }
+        shiftedLight[0] += off;
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
 	//aiMatrix4x4::RotationY(a,rotation);
@@ -113,7 +119,7 @@ static void display(void) {
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
 	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
 	shader->uniform1f("scalar",3.4f);
-	shader->uniform4fv("lightPosition",light_position);
+	shader->uniform4fv("lightPosition",shiftedLight);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
 	shader->uniform4fv("translation",trans);
@@ -161,12 +167,20 @@ static void key(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 double last = 0.0;
+double minfps=999.0;
 static void idle(void) {
+glutPostRedisplay();
+return;
 	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	if((t - last) > (1.0/60.0)) {
 		last = t;
 		glutPostRedisplay();
 	}
+	if(1.0/(t - last) < minfps)
+	{
+	        minfps = 1.0/(t - last);
+	        cout << "               \r" << int(minfps) << " min FPS\r";
+        }
 }
 
 int main(int argc, char *argv[]) {

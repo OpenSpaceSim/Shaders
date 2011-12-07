@@ -16,6 +16,7 @@ uniform sampler2D specTex;
 out vec4 FragColor;
 
 const float samples = 1000;
+const float shadowSamples = samples/10;
 const float depth = 0.1;
 
 vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
@@ -60,10 +61,10 @@ float ComputeParallaxOcclusionVisibility(vec2 texCoord) {
         lightVec = vec3(-lightVec.x,-lightVec.y,lightVec.z);
         
         //amount to decrement the distance each step
-        float inc = 1.0/samples;
+        float inc = 1.0/shadowSamples;
         
         //amount to shift texture coordinates each step
-        vec2 delta = vec2(-lightVec.x, lightVec.y) * depth / (lightVec.z * samples);
+        vec2 delta = vec2(-lightVec.x, lightVec.y) * depth / (lightVec.z * shadowSamples);
         
         //height of the eye vector
         float dist = texture2D(depthTex,texCoord).x;
