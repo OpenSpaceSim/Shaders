@@ -29,7 +29,7 @@ void main(void)
         lightIntensity += diffuseLightFalloff * light.z * lightDiffuse;
 	// specular lighting
 	vec4 specularColor = texture(specTex,texCoords.xy);
-	float specularIntensity = length(specularColor);
+	//float specularIntensity = length(specularColor);
 	lightIntensity += 5*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
 	//lightIntensity += specularColor*specularIntensity*pow(lightAngle,specularIntensity);
         
