@@ -68,7 +68,7 @@ typedef struct aiVector3D vector;
 
 /* GLUT callback Handlers */
 
-GLfloat viewMatrix[16];
+aiMatrix4x4 viewMatrix;
 
 //lighting and material information
 const aiColor4D light_ambient(0.1f, 0.1f, 0.1f, 1.0f);
@@ -86,24 +86,39 @@ const GLfloat high_shininess[] = { 100.0f };
 static void resize(int width, int height) {
 	glViewport(0, 0, width, height);
 	const float ar = (float) width / (float) height;
-	BuildPerspProjMat(viewMatrix, 90.0, ar, 0.1, 100);
+	float view[16];
+	BuildPerspProjMat(view, 90.0, ar, 0.1, 100);
+	viewMatrix = aiMatrix4x4(view[0],view[1],view[2],view[3],
+	                view[4],view[5],view[6],view[7],
+	                view[8],view[9],view[10],view[11],
+	                view[12],view[13],view[14],view[15]);
+        aiMatrix4x4 tmp;
+        //aiMatrix4x4::Translation(aiVector3D(0.0,1.0,1.0),tmp);
+        //viewMatrix *= tmp;
+        //aiMatrix4x4::RotationX(3.1415926535/4,tmp);
+        //viewMatrix *= tmp;
+        
+        
 }
 
 static void display(void) {
-	const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+	const double t = glutGet(GLUT_ELAPSED_TIME) / 10000.0;
 	const double a = t*0.5;
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
 	aiMatrix4x4::RotationY(a,rotation);
-	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
+	//aiMatrix4x4::Translation(off,rotation);
+	aiMatrix4x4::RotationX(-3.1415926535/12.0,tmp);
+	rotation *=tmp;
+	//aiMatrix4x4::Translation(aiVector3D(0.0,-1.0,-5.0),tmp);
 	//rotation *=tmp;
 	rotation *= modelMatrix;
 	
 	shader->bind();
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
-	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
-	shader->uniform1f("scalar",3.4f);
+	shader->uniformMatrix4fv("viewMatrix",*viewMatrix);
+	shader->uniform1f("scalar",100.0f);
 	shader->uniform4fv("lightPosition",light_position);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
@@ -203,7 +218,12 @@ int main(int argc, char *argv[]) {
 
 	checkError();
 	
-	BuildPerspProjMat(viewMatrix, 90.0, 4.0/3.0, 0.1, 100);
+	float view[16];
+	BuildPerspProjMat(view, 90.0, 4.0/3.0, 0.1, 100);
+	viewMatrix = aiMatrix4x4(view[0],view[1],view[2],view[3],
+	                        view[4],view[5],view[6],view[7],
+	                        view[8],view[9],view[10],view[11],
+	                        view[12],view[13],view[14],view[15]);
 
 	glutReshapeFunc(resize);
 	glutDisplayFunc(display);
@@ -385,8 +405,8 @@ int main(int argc, char *argv[]) {
 	glGenTextures(4,textures);
 	checkError();
 	cout << "loading image from file" << endl;
-	BitMapFile* image = getBMPData("rock01.bmp");
-	BitMapFile* depthmap = getBMPData("rock01_height.bmp");
+	BitMapFile* image = getBMPData("brick.bmp");
+	BitMapFile* depthmap = getBMPData("brick_depth.bmp");
 	BitMapFile* normalmap = getBMPData("rock01_norm.bmp");
 	BitMapFile* specmap = getBMPData("rock01_spec.bmp");
 	cout << "binding texture" << endl;
