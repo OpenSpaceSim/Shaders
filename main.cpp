@@ -95,10 +95,10 @@ static void display(void) {
 	
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	aiMatrix4x4::RotationY(a,rotation);
+	//aiMatrix4x4::RotationY(a,rotation);
 	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
 	//rotation *=tmp;
-	rotation *= modelMatrix;
+	rotation = modelMatrix;
 	
 	shader->bind();
 	shader->uniformMatrix4fv("modelMatrix",*rotation);
