@@ -3,8 +3,9 @@
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
-#endif
 #include <GL/freeglut.h>
+#endif
+
 
 #include <cstdlib>
 #include <cmath>
