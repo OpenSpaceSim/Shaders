@@ -61,6 +61,10 @@ struct aiVector3D scene_min, scene_max, scene_center;
 float samples = 1000;
 float depth = 0.1;
 int culling = 1;
+bool moveLand = true;
+bool moveLight = true;
+float lightOff = 0.0f;
+float landOff = 0.0f;
 
 typedef struct aiVector3D vector;
 
@@ -96,17 +100,24 @@ static void display(void) {
 	
 	off += inc*(t-lastT);
 	lastT = t;
+	if(moveLight)
+                lightOff = off;
+        if(moveLand)
+                landOff = off;
 	if(off>0.5)
 	        inc = -abs(inc);
         if(off<-0.5)
                 inc = abs(inc);
-	trans[0] = off;
 	GLfloat shiftedLight[4];
 	for(int i=0;i<4;i++)
 	{
 	        shiftedLight[i] = light_position[i];
         }
-        shiftedLight[0] += off;
+        
+                
+        shiftedLight[0] += lightOff;
+        trans[0] = landOff;
+        
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
 	//aiMatrix4x4::RotationY(a,rotation);
@@ -172,6 +183,21 @@ static void key(unsigned char key, int x, int y) {
 	                if(depth > 0.0)
         	                depth -= 0.01;
 	                break;
+                case 's':
+                        moveLand = !moveLand;
+                        landOff = off;
+                        break;
+                case 'd':
+                        moveLight = !moveLight;
+                        lightOff = off;
+                        break;
+                case 'f':
+                        inc += 0.001*inc/abs(inc);
+                        break;
+                case 'v':
+                        if(inc > 0.001)
+                                inc -= 0.001*inc/abs(inc);
+                        break;
 	}
 
 	glutPostRedisplay();
