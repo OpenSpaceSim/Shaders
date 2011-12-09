@@ -140,6 +140,9 @@ vec4 ComputeTex(mat4 alias, sampler2D tex) {
 }
 
 vec4 GetLightingFactor(vec3 point, float pointDist, vec4 pointColor) {
+        //If we're pointing away from the light don't both calculating lighting
+        if(dot(point,vec3(0,0,1))<0)
+                return vec4(0);
 	// SHADOW MAPPING
 	// Compute light's shadow factor
 	float shadow = ComputeParallaxOcclusionVisibility(offsetCoord, point, pointDist);

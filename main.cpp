@@ -190,7 +190,8 @@ static void key(unsigned char key, int x, int y) {
                         cout << "samples:" << samples+1 << endl; //we add 1 in the shader to ensure a value of at least 1 always
 		        break;
 	        case 'b':
-	                samples -= 1;
+	                if(samples > 0)
+        	                samples -= 1;
 	                cout << "samples:" << samples+1 << endl; //we add 1 in the shader to ensure a value of at least 1 always
 		        break;
                 case 's':
