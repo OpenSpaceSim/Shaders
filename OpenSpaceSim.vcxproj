@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>OpenAssetImport/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>assimp.lib;freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>OpenAssetImport/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>assimp.lib;freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="shader.cpp" />
+    <ClCompile Include="util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="openassetimport\include\aiAnim.h" />
+    <ClInclude Include="openassetimport\include\aiAssert.h" />
+    <ClInclude Include="openassetimport\include\aiCamera.h" />
+    <ClInclude Include="openassetimport\include\aiColor4D.h" />
+    <ClInclude Include="openassetimport\include\aiConfig.h" />
+    <ClInclude Include="openassetimport\include\aiDefines.h" />
+    <ClInclude Include="openassetimport\include\aiFileIO.h" />
+    <ClInclude Include="openassetimport\include\aiLight.h" />
+    <ClInclude Include="openassetimport\include\aiMaterial.h" />
+    <ClInclude Include="openassetimport\include\aiMatrix3x3.h" />
+    <ClInclude Include="openassetimport\include\aiMatrix4x4.h" />
+    <ClInclude Include="openassetimport\include\aiMesh.h" />
+    <ClInclude Include="openassetimport\include\aiPostProcess.h" />
+    <ClInclude Include="openassetimport\include\aiQuaternion.h" />
+    <ClInclude Include="openassetimport\include\aiScene.h" />
+    <ClInclude Include="openassetimport\include\aiTexture.h" />
+    <ClInclude Include="openassetimport\include\aiTypes.h" />
+    <ClInclude Include="openassetimport\include\aiVector2D.h" />
+    <ClInclude Include="openassetimport\include\aiVector3D.h" />
+    <ClInclude Include="openassetimport\include\aiVersion.h" />
+    <ClInclude Include="openassetimport\include\assimp.h" />
+    <ClInclude Include="openassetimport\include\assimp.hpp" />
+    <ClInclude Include="openassetimport\include\compiler\poppack1.h" />
+    <ClInclude Include="openassetimport\include\compiler\pushpack1.h" />
+    <ClInclude Include="openassetimport\include\DefaultLogger.h" />
+    <ClInclude Include="openassetimport\include\IOStream.h" />
+    <ClInclude Include="openassetimport\include\IOSystem.h" />
+    <ClInclude Include="openassetimport\include\Logger.h" />
+    <ClInclude Include="openassetimport\include\LogStream.h" />
+    <ClInclude Include="openassetimport\include\NullLogger.h" />
+    <ClInclude Include="openassetimport\include\ProgressHandler.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="openassetimport\include\aiColor4D.inl" />
+    <None Include="openassetimport\include\aiMaterial.inl" />
+    <None Include="openassetimport\include\aiMatrix3x3.inl" />
+    <None Include="openassetimport\include\aiMatrix4x4.inl" />
+    <None Include="openassetimport\include\aiVector3D.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
 	checkError();
 	cout << "Setup GLUT callbacks" << endl;
 
-	glClearColor(0,0,0,0);
+	glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]) {
 	stream = aiGetPredefinedLogStream(aiDefaultLogStream_FILE,"assimp_log.txt");
 	aiAttachLogStream(&stream);
 
-	if( 0 != loadasset( argc >= 2 ? argv[1] : "ship.obj")) {
+	if( 0 != loadasset( argc >= 2 ? argv[1] : "plane.blend")) {
 		if( argc != 1 || 0 != loadasset( "../../../test/models-nonbsd/X/ship.obj") && 0 != loadasset( "../../test/models/X/Testwuson.X")) { 
 			return -1;
 		}
@@ -335,10 +335,10 @@ int main(int argc, char *argv[]) {
 	stack<const struct aiNode*> nodeStack;
 	nodeStack.push(scene->mRootNode);
 	const struct aiNode* node=scene->mRootNode;
-	vector<vertex> verts;
-	vector<vertex> norms;
-	vector<vertex> tans;
-	vector<vertex> texvec;
+	std::vector<vertex> verts;
+	std::vector<vertex> norms;
+	std::vector<vertex> tans;
+	std::vector<vertex> texvec;
 	vertexCount=0;
 	while(nodeStack.size() > 0)
 	{
