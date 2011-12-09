@@ -19,6 +19,7 @@ uniform sampler2D normTex;
 uniform sampler2D specTex;
 uniform float samples;
 uniform float depth;
+uniform float interp;
 
 // The actual tecture coord after parallax mapping
 vec2 offsetCoord;
@@ -31,12 +32,13 @@ vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
         /// here we calculate the parallax offset.
         /// at each pixel we check to make sure we don't intersect with a previous
         /// position on the height map
+        float dsamples = samples*(1-max(dot(eyevec,vec3(0,0,1)),0))+1;
         
         //amount to decrement the distance each step
-        float inc = 1.0/samples;
+        float inc = 1.0/dsamples;
         
         //amount to shift texture coordinates each step
-        vec2 delta = vec2(-eyevec.x, eyevec.y) * depth / (eyevec.z * samples);
+        vec2 delta = vec2(-eyevec.x, eyevec.y) * depth / (eyevec.z * dsamples);
         
         //height of the eye vector
         float dist = 1.0;
@@ -47,10 +49,13 @@ vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
         
         while(dist > height && dist > 0) //step through the texture
         {
-                height = (texture(depthTex,offsetCoord).x);
                 offsetCoord += delta;
                 dist -= inc;
+                height = (texture(depthTex,offsetCoord).x);
         }
+        float nextd = height-dist;
+        float prevd = (dist+inc) - (texture(depthTex,offsetCoord-delta).x);
+        offsetCoord = mix(offsetCoord,offsetCoord-delta,interp*nextd/(prevd+nextd));
         if(max(abs(offsetCoord.x-0.5),abs(offsetCoord.y-0.5)) > 0.5)
                 discard;
         return offsetCoord;
@@ -61,7 +66,7 @@ float ComputeParallaxOcclusionVisibility(vec2 texCoord, vec3 point, float pointD
         /// here we calculate the parallax offset.
         /// at each pixel we check to make sure we don't intersect with a previous
         /// position on the height map
-        float shadowSamples = samples/10;
+        float shadowSamples = samples*(1-max(dot(eyevec,vec3(0,0,1)),0))+1;
         float texCoordDepth = texture2D(depthTex,texCoord).x * depth;
         float texCoordHorizUnit = depth*length(vec2(-eyevec.x, eyevec.y) * depth / (eyevec.z * shadowSamples))/(1.0/shadowSamples);
         float texCoordHoriz = texCoordHorizUnit*length(texCoord);

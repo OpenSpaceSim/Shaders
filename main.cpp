@@ -58,8 +58,9 @@ aiMatrix4x4 modelMatrix;
 const struct aiScene* scene = NULL;
 struct aiVector3D scene_min, scene_max, scene_center;
 
-float samples = 1000;
+float samples = 50;
 float depth = 0.1;
+float interp = 1.0;
 int culling = 1;
 bool moveLand = true;
 bool moveLight = true;
@@ -132,6 +133,7 @@ static void display(void) {
 	shader->uniform1f("scalar",3.4f);
 	shader->uniform1f("samples",samples);
 	shader->uniform1f("depth",depth);
+	shader->uniform1f("interp",interp);
 	shader->uniform4fv("lightPosition",shiftedLight);
 	shader->uniform4fv("lightAmbient",*light_ambient);
 	shader->uniform4fv("lightDiffuse",*light_diffuse);
@@ -184,10 +186,12 @@ static void key(unsigned char key, int x, int y) {
         	                depth -= 0.01;
 	                break;
                 case 'g':
-                        samples += 100;
+                        samples += 1;
+                        cout << "samples:" << samples+1 << endl; //we add 1 in the shader to ensure a value of at least 1 always
 		        break;
 	        case 'b':
-	                samples /= 2;
+	                samples -= 1;
+	                cout << "samples:" << samples+1 << endl; //we add 1 in the shader to ensure a value of at least 1 always
 		        break;
                 case 's':
                         moveLand = !moveLand;
@@ -218,6 +222,9 @@ static void key(unsigned char key, int x, int y) {
                             glutSetCursor(GLUT_CURSOR_INHERIT);
                           }
                           break;
+                  case 'i':
+                        interp = (interp>0.0f)?0.0f:1.0f;
+                        break;
 	}
 
 	glutPostRedisplay();
