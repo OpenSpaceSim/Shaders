@@ -45,12 +45,14 @@ vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
         //texture coordinates
         vec2 offsetCoord = texCoords.xy+vec2(initOffsetX*delta.x,initOffsetY*delta.y);
         
-        while(dist > height) //step through the texture
+        while(dist > height && dist > 0) //step through the texture
         {
                 height = (texture(depthTex,offsetCoord).x);
                 offsetCoord += delta;
                 dist -= inc;
         }
+        if(max(abs(offsetCoord.x-0.5),abs(offsetCoord.y-0.5)) > 0.5)
+                discard;
         return offsetCoord;
 }
 float ComputeParallaxOcclusionVisibility(vec2 texCoord, vec3 point, float pointDist) {

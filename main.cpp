@@ -177,12 +177,18 @@ static void key(unsigned char key, int x, int y) {
 			break;
 		case 'a':
 		        depth += 0.01;
-		        samples += 100;
+		        //samples += 100;
 		        break;
 	        case 'z':
 	                if(depth > 0.0)
         	                depth -= 0.01;
 	                break;
+                case 'g':
+                        samples += 100;
+		        break;
+	        case 'b':
+	                samples /= 2;
+		        break;
                 case 's':
                         moveLand = !moveLand;
                         landOff = off;
