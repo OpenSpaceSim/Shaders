@@ -51,14 +51,14 @@ vertex* texCoords;
 Shader* shader;
 GLuint vertexArrays[2];
 GLuint vertexBuffers[4];
-GLuint textures[2];
+GLuint textures[4];
 
 aiMatrix4x4 modelMatrix;
 
 const struct aiScene* scene = NULL;
 struct aiVector3D scene_min, scene_max, scene_center;
 
-float samples = 50;
+float samples = 40;
 float depth = 0.1;
 float interp = 1.0;
 int culling = 1;
@@ -264,7 +264,6 @@ int main(int argc, char *argv[]) {
 	checkError();
 	glutInitWindowSize(640,480);
 	checkError();
-	
 	glutCreateWindow("Open Space Sim");
 	
 	checkError();
@@ -387,50 +386,6 @@ int main(int argc, char *argv[]) {
 		tangents[i]=tans[i];
 		texCoords[i]=texvec[i];
 	}
-	//calculateModelNormals(normals,4);
-	
-	//vertex* newNormals = new vertex[vertexCount];
-	
-	/*for(int i=0;i<vertexCount;i++) {
-		float count = 1.0f;
-		newNormals[i].x = normals[i].x;
-		newNormals[i].y = normals[i].y;
-		newNormals[i].z = normals[i].z;
-		for(int j=0;j<vertexCount;j++) {
-			if(vertices[i].x == vertices[j].x && vertices[i].y == vertices[j].y && vertices[i].z == vertices[j].z) {
-				newNormals[i].x += normals[j].x;
-				newNormals[i].y += normals[j].y;
-				newNormals[i].z += normals[j].z;
-				count++;
-			}
-	}
-	newNormals[i].x /= count;
-	newNormals[i].y /= count;
-	newNormals[i].z /= count;
-	}*/
-	
-	
-	/*texCoords = new GLfloat[vertexCount*2];
-	for(int i=0;i<vertexCount*2;i+=2) {
-		switch(i%8) {
-			case 0:
-				texCoords[i] = 1.0f;
-				texCoords[i+1] = 1.0f;
-				break;
-			case 2:
-				texCoords[i] = 0.0f;
-				texCoords[i+1] = 1.0f;
-				break;
-			case 4:
-				texCoords[i] = 1.0f;
-				texCoords[i+1] = 0.0f;
-				break;
-			case 6:
-				texCoords[i] = 0.0f;
-				texCoords[i+1] = 0.0f;
-				break;
-		}
-	}*/
 	checkError();
 	glGenVertexArrays(1, vertexArrays);
 	checkError();
@@ -475,67 +430,22 @@ int main(int argc, char *argv[]) {
 	cout << "allocating texture" <<endl;
 	glGenTextures(4,textures);
 	checkError();
-	cout << "loading image from file" << endl;
-	BitMapFile* image = getBMPData("rock01.bmp");
-	BitMapFile* depthmap = getBMPData("rock01_height.bmp");
-	BitMapFile* normalmap = getBMPData("rock01_norm.bmp");
-	BitMapFile* specmap = getBMPData("rock01_spec.bmp");
-	cout << "binding texture" << endl;
-	glBindTexture(GL_TEXTURE_2D, textures[0]);
-	checkError();
-	cout << "setting texture parameters" << endl;
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	checkError();
-	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
-	checkError();
-	cout << "generating mipmaps" << endl;
-	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
-	//  delete image; //free our copy of the image
-	
-	glBindTexture(GL_TEXTURE_2D, textures[1]);
-	checkError();
-	cout << "setting texture parameters" << endl;
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	checkError();
-	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, depthmap->data);
-	checkError();
-	cout << "generating mipmaps" << endl;
-	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
-	glBindTexture(GL_TEXTURE_2D, textures[2]);
-	checkError();
-	cout << "setting texture parameters" << endl;
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	checkError();
-	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, normalmap->data);
-	checkError();
-	cout << "generating mipmaps" << endl;
-	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
-	glBindTexture(GL_TEXTURE_2D, textures[3]);
-	checkError();
-	cout << "setting texture parameters" << endl;
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	checkError();
-	cout << "loading texture data" << endl;
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, depthmap->sizeX, depthmap->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, specmap->data);
-	checkError();
-	cout << "generating mipmaps" << endl;
-	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
-	
+	if (!LoadTextureFromBitmap("rock01.bmp", textures[0])) {
+		cout << "ERROR: Could not proceed without loading file" << endl;
+		return 0;
+	}
+	if (!LoadTextureFromBitmap("rock01_height.bmp", textures[1])) {
+		cout << "ERROR: Could not proceed without loading file" << endl;
+		return 0;
+	}
+	if (!LoadTextureFromBitmap("rock01_norm.bmp", textures[2])) {
+		cout << "ERROR: Could not proceed without loading file" << endl;
+		return 0;
+	}
+	if (!LoadTextureFromBitmap("rock01_spec.bmp", textures[3])) {
+		cout << "ERROR: Could not proceed without loading file" << endl;
+		return 0;
+	}
 	
 	checkError();
 

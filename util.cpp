@@ -1,4 +1,5 @@
 #include "util.h"
+#include <inttypes.h>
 using namespace std;
 
 void get_bounding_box_for_node (const struct aiNode* nd, 
@@ -81,9 +82,16 @@ BitMapFile *getBMPData(string filename) {
 	infile.seekg(18);
 	infile.read( (char *) &bmp->sizeX, 4);
 	infile.read( (char *) &bmp->sizeY, 4);
+	infile.seekg(28);
+	infile.read( (char *) &bmp->bitDepth, 2);
+	if (bmp->bitDepth !=24 && bmp->bitDepth!=32) {
+		cout << "ERROR - Cannot load bitmap. Unknown bitdepth: " << bmp->bitDepth << endl;
+		delete bmp;
+		return 0;
+	}
 
 	// Allocate buffer for the image.
-	size = bmp->sizeX * bmp->sizeY * 24;
+	size = bmp->sizeX * bmp->sizeY * bmp->bitDepth;
 	bmp->data = new unsigned char[size];
 
 	// Read bitmap data.
@@ -91,13 +99,26 @@ BitMapFile *getBMPData(string filename) {
 	infile.read((char *) bmp->data , size);
 
 	// Reverse color from bgr to rgb.
-	int temp;
-	for (int i = 0; i < size; i += 3) { 
-		temp = bmp->data[i];
-		bmp->data[i] = bmp->data[i+2];
-		bmp->data[i+2] = temp;
+	if (bmp->bitDepth!=32) {
+		uint32_t temp;
+		for (int i = 0; i < size; i += 3) { 
+			temp = bmp->data[i];
+			bmp->data[i] = bmp->data[i+2];
+			bmp->data[i+2] = temp;
+		}
+	} else {
+		uint32_t R, G, B, A;
+		for (int i = 0; i < size; i += 4) {
+			A = bmp->data[i];
+			R = bmp->data[i+1];
+			G = bmp->data[i+2];
+			B = bmp->data[i+3];
+			bmp->data[i+2] = R;
+			bmp->data[i+1] = G;
+			bmp->data[i+0] = B;
+			bmp->data[i+3] = A;
+		}
 	}
-
 	return bmp;
 }
 
@@ -230,4 +251,30 @@ void BuildPerspProjMat(float *m, float fov, float aspect, float znear, float zfa
 	m[13] = 0;
 	m[14] = qn;
 	m[15] = 0;
+}
+bool LoadTextureFromBitmap(const char *file, GLuint texture) {
+	cout << "loading image from file: " << file << endl;
+	BitMapFile* image = getBMPData(file);
+	if (image==0) {
+		return false;
+	}
+	glBindTexture(GL_TEXTURE_2D, texture);
+	checkError();
+	cout << "setting texture parameters" << endl;
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	checkError();
+	cout << "loading texture data" << endl;
+	if (image->bitDepth==24) {
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D,0,GL_RGB, image->sizeX, image->sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data);
+	}
+	checkError();
+	cout << "generating mipmaps" << endl;
+	glGenerateMipmap(GL_TEXTURE_2D); //Generate mipmaps now!!!
+	delete image;
+	return true;
 }

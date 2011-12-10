@@ -112,12 +112,12 @@ mat4 ComputeAlias(float left, float right, float top, float bottom) {
         vec2 BR = ComputeParallaxOcclusionOffset(right, bottom);
         vec2 TR = ComputeParallaxOcclusionOffset(right, top);
         vec2 BL = ComputeParallaxOcclusionOffset(left, bottom);
-/*	vec2 ML = ComputeParallaxOcclusionOffset(left, vmid);
+	vec2 ML = ComputeParallaxOcclusionOffset(left, vmid);
         vec2 MR = ComputeParallaxOcclusionOffset(right, vmid);
         vec2 TM = ComputeParallaxOcclusionOffset(hmid, top);
-        vec2 BM = ComputeParallaxOcclusionOffset(hmid, bottom);*/
+        vec2 BM = ComputeParallaxOcclusionOffset(hmid, bottom);
         vec4 zero = vec4(0,0,0,0);
-        return mat4(TL,BR,TR,BL,zero,zero);//,TM,ML,MR,BM);
+        return mat4(TL,BR,TR,BL,TM,ML,MR,BM);
 }
 
 vec4 ComputeTex(mat4 alias, sampler2D tex) {
@@ -130,32 +130,34 @@ vec4 ComputeTex(mat4 alias, sampler2D tex) {
         row = alias[1];
         texel += texture2D(tex, vec2(row[0],row[1]));
         texel += texture2D(tex, vec2(row[2],row[3]));
-/*        row = alias[2];
+        row = alias[2];
         texel += texture2D(tex, vec2(row[0],row[1]));
         texel += texture2D(tex, vec2(row[2],row[3]));
         row = alias[3];
         texel += texture2D(tex, vec2(row[0],row[1]));
-        texel += texture2D(tex, vec2(row[2],row[3]));*/
+        texel += texture2D(tex, vec2(row[2],row[3]));
         return texel/4;
 }
 
 vec4 GetLightingFactor(vec3 point, float pointDist, vec4 pointColor) {
-        //If we're pointing away from the light don't both calculating lighting
+        //If we're pointing away from the light don't bother calculating lighting
         if(dot(point,vec3(0,0,1))<0)
                 return vec4(0);
 	// SHADOW MAPPING
 	// Compute light's shadow factor
 	float shadow = ComputeParallaxOcclusionVisibility(offsetCoord, point, pointDist);
 	// NORMAL MAPPING
-	vec3 surface_normal = normalize((texture2D(normTex, offsetCoord) * 2.0 - 1.0).xyz);
+	vec3 surface_normal = normalize((texture2D(normTex, offsetCoord) * 2.0 - 1.0).xyz+vec3(0,0,1));
 	// DIFFUSE LIGHTING
 	// Quadradic light dispersal function
 	float diffuseLightFalloff = min((10.0/(pointDist*pointDist)),1.0);
+	vec4 diffuseFactor = (diffuseLightFalloff * point.z * pointColor);
 	// SPECULAR LIGHTING W SPECULAR MAPPING
 	vec4 specularColor = texture(specTex,offsetCoord);
 	float specularIntensity = length(specularColor);
+	vec4 specularFactor = specularIntensity*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0);
 	// PUTTING THE LIGHT TOGETHER
-	return shadow*((diffuseLightFalloff * point.z * pointColor) + specularIntensity*specularColor * pow (max (dot (halfVec, surface_normal), 0.0), 2.0));
+	return shadow*( diffuseFactor + specularFactor );
 }
 
 void main(void) {

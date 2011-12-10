@@ -27,9 +27,10 @@ using namespace std;
 //load Bitmap file
 // Struct of bitmap file.
 struct BitMapFile {
-   int sizeX;
-   int sizeY;
-   unsigned char *data;
+	int sizeX;
+	int sizeY;
+	unsigned short bitDepth;
+	unsigned char *data;
 };
 
 typedef struct aiVector3D vertex;
@@ -55,4 +56,5 @@ void get_bounding_box_for_node (const struct aiNode* nd,
 void get_bounding_box (struct aiVector3D* min, struct aiVector3D* max);
 
 int loadasset (const char* path);
+bool LoadTextureFromBitmap(const char *file, GLuint texture);
 #endif

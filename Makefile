@@ -10,9 +10,6 @@ INCLUDEFLAGS = -I./OpenAssetImport/include
 openSpaceSim : $(OFILES)
 	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
 	
-monkey : $(OFILES)
-	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
-	./openSpaceSim ./monkey.blend
 plane : $(OFILES)
 	$(CC) -o openSpaceSim $(OFILES) $(LDFLAGS)
 	./openSpaceSim ./plane.blend
