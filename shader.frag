@@ -47,7 +47,7 @@ vec2 ComputeParallaxOcclusionOffset(float initOffsetX, float initOffsetY) {
         //texture coordinates
         vec2 offsetCoord = texCoords.xy+vec2(initOffsetX*delta.x,initOffsetY*delta.y);
         
-        while(dist > height && dist > 0) //step through the texture
+        while(dist > height && dist > 0.0) //step through the texture
         {
                 offsetCoord += delta;
                 dist -= inc;

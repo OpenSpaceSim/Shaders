@@ -35,8 +35,8 @@ void main(void) {
                          tan.z, bitan.z, norm.z);
         mat3 itbnMatrix = inverse(tbnMatrix);
         light = normalize(tbnMatrix*(lightPosition-gl_Position).xyz);
-        eyevec = normalize(tbnMatrix * (gl_Position).xyz);
-        lightDist = length(((viewMatrix*lightPosition)-gl_Position).xyz);
+        eyevec = normalize(tbnMatrix*(gl_Position).xyz);
+        lightDist = length(((lightPosition)-gl_Position).xyz);
 	
 	halfVec = normalize(gl_Position.xyz + light);
 	halfVec = vec3(dot(halfVec,tan),dot(halfVec,bitan),dot(halfVec,norm));

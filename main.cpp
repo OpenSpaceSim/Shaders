@@ -121,14 +121,15 @@ static void display(void) {
         
 	//rotate around y axis
 	aiMatrix4x4 rotation, tmp;
-	//aiMatrix4x4::RotationY(a,rotation);
-	//aiMatrix4x4::Translation(aiVector3D(0.0f,0.0f,0.0f),rotation);
+	aiIdentityMatrix4(&rotation);
+	//aiMatrix4x4::RotationY(landOff*2,rotation);
+	aiMatrix4x4::Translation(aiVector3D(trans[0],trans[1],trans[2]),rotation);
 	//aiMatrix4x4::RotationY(-3.1415926535/2,tmp);
 	//rotation *=tmp;
-	rotation *= modelMatrix;
+	rotation = (*(aiMatrix4x4*)viewMatrix)*rotation;
 	
 	shader->bind();
-	shader->uniformMatrix4fv("modelMatrix",*rotation);
+	shader->uniformMatrix4fv("modelMatrix",*modelMatrix);
 	shader->uniformMatrix4fv("viewMatrix",viewMatrix);
 	shader->uniform1f("scalar",3.4f);
 	shader->uniform1f("samples",samples);
